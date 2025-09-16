@@ -8,35 +8,61 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Educational Color Palette */
+    --background: 220 15% 98%;
+    --foreground: 220 15% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 15% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 15% 8%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Deep Academic Blue */
+    --primary: 220 75% 45%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 220 85% 65%;
+    
+    /* Secondary - Warm Success Green */
+    --secondary: 142 76% 36%;
+    --secondary-foreground: 0 0% 98%;
+    
+    /* Academic Purple for accents */
+    --accent: 260 84% 57%;
+    --accent-foreground: 0 0% 98%;
+    --accent-light: 260 55% 75%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Muted tones */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 12% 45%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Warning and destructive */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Borders and inputs */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 75% 45%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(220 75% 45%), hsl(260 84% 57%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 14% 98%));
+    --gradient-progress: linear-gradient(90deg, hsl(142 76% 36%), hsl(142 76% 45%));
+    --gradient-accent: linear-gradient(135deg, hsl(260 84% 57%), hsl(260 55% 75%));
+    
+    /* Shadows */
+    --shadow-card: 0 4px 6px -1px hsl(220 15% 8% / 0.1), 0 2px 4px -2px hsl(220 15% 8% / 0.1);
+    --shadow-elevated: 0 10px 15px -3px hsl(220 15% 8% / 0.1), 0 4px 6px -4px hsl(220 15% 8% / 0.1);
+    --shadow-glow: 0 0 30px hsl(220 75% 45% / 0.3);
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
+    /* Animation timing */
+    --animation-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -56,33 +82,56 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark Academic Theme */
+    --background: 220 15% 6%;
+    --foreground: 220 15% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 15% 8%;
+    --card-foreground: 220 15% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 15% 8%;
+    --popover-foreground: 220 15% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary - Brighter blue for dark mode */
+    --primary: 220 85% 65%;
+    --primary-foreground: 220 15% 6%;
+    --primary-glow: 220 95% 75%;
+    
+    /* Secondary - Brighter green for dark mode */
+    --secondary: 142 76% 46%;
+    --secondary-foreground: 220 15% 6%;
+    
+    /* Accent - Vibrant purple for dark mode */
+    --accent: 260 84% 67%;
+    --accent-foreground: 220 15% 6%;
+    --accent-light: 260 65% 85%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Muted dark tones */
+    --muted: 220 15% 12%;
+    --muted-foreground: 220 12% 65%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Warning and destructive */
+    --warning: 38 92% 60%;
+    --warning-foreground: 220 15% 6%;
+    
+    --destructive: 0 84% 70%;
+    --destructive-foreground: 220 15% 6%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Dark borders and inputs */
+    --border: 220 15% 15%;
+    --input: 220 15% 15%;
+    --ring: 220 85% 65%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Dark gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(220 85% 65%), hsl(260 84% 67%));
+    --gradient-card: linear-gradient(145deg, hsl(220 15% 8%), hsl(220 15% 10%));
+    --gradient-progress: linear-gradient(90deg, hsl(142 76% 46%), hsl(142 76% 55%));
+    --gradient-accent: linear-gradient(135deg, hsl(260 84% 67%), hsl(260 65% 85%));
+    
+    /* Dark shadows */
+    --shadow-card: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
+    --shadow-elevated: 0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -4px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 30px hsl(220 85% 65% / 0.4);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -100,6 +149,72 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image: radial-gradient(circle at 25% 25%, hsl(var(--primary) / 0.05) 0%, transparent 50%),
+                      radial-gradient(circle at 75% 75%, hsl(var(--accent) / 0.05) 0%, transparent 50%);
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Enhanced focus styles */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Hero gradient background */
+  .hero-gradient {
+    background: var(--gradient-hero);
+  }
+  
+  /* Card gradient background */
+  .card-gradient {
+    background: var(--gradient-card);
+  }
+  
+  /* Progress gradient */
+  .progress-gradient {
+    background: var(--gradient-progress);
+  }
+  
+  /* Glow effect */
+  .glow {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s var(--animation-smooth);
+  }
+
+  /* Academic stats cards */
+  .stats-card {
+    @apply rounded-xl p-6 border backdrop-blur-sm transition-all duration-300 hover:scale-105;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Progress ring animations */
+  @keyframes progress-fill {
+    from { stroke-dasharray: 0 100; }
+  }
+  
+  .progress-ring {
+    animation: progress-fill 1s ease-out;
+  }
+
+  /* Floating animation for cards */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .float-animation {
+    animation: float 6s ease-in-out infinite;
   }
 }
