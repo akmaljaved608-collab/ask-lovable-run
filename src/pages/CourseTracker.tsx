@@ -7,7 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { BookOpen, GraduationCap, Target, TrendingUp, Clock, Award, Plus, ChevronRight } from "lucide-react";
+import { BookOpen, GraduationCap, Target, TrendingUp, Clock, Award, Plus, ChevronRight, LogOut, User } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Subject {
   id: string;
@@ -41,100 +44,200 @@ const CourseTracker: React.FC = () => {
   const [activeTab, setActiveTab] = useState('courses');
   const [viewMode, setViewMode] = useState<'overview' | 'course-detail'>('overview');
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const savedCourses = localStorage.getItem('courseTrackerData');
-    if (savedCourses) {
-      setCourses(JSON.parse(savedCourses));
+    if (user) {
+      loadCourses();
     }
-  }, []);
+  }, [user]);
 
-  useEffect(() => {
-    localStorage.setItem('courseTrackerData', JSON.stringify(courses));
-  }, [courses]);
+  const loadCourses = async () => {
+    try {
+      setLoading(true);
+      const { data: coursesData, error: coursesError } = await supabase
+        .from('courses')
+        .select(`
+          *,
+          subjects (
+            *,
+            syllabus_items (*)
+          )
+        `)
+        .order('created_at', { ascending: false });
 
-  const createCourse = () => {
-    if (newCourse.name.trim()) {
-      const course: Course = {
-        id: Date.now().toString(),
-        name: newCourse.name,
-        description: newCourse.description,
-        subjects: [],
-        createdAt: new Date().toISOString()
-      };
-      setCourses([...courses, course]);
+      if (coursesError) throw coursesError;
+
+      const transformedCourses: Course[] = coursesData?.map(course => ({
+        id: course.id,
+        name: course.name,
+        description: course.description || '',
+        createdAt: course.created_at,
+        subjects: course.subjects?.map((subject: any) => ({
+          id: subject.id,
+          name: subject.name,
+          description: subject.description || '',
+          syllabusChecklist: subject.syllabus_items?.map((item: any) => ({
+            id: item.id,
+            content: item.content,
+            completed: item.completed,
+            dateCompleted: item.date_completed
+          })) || []
+        })) || []
+      })) || [];
+
+      setCourses(transformedCourses);
+    } catch (error: any) {
+      toast({
+        title: "Error loading courses",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createCourse = async () => {
+    if (!newCourse.name.trim() || !user) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('courses')
+        .insert([{
+          name: newCourse.name,
+          description: newCourse.description,
+          user_id: user.id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await loadCourses();
       setNewCourse({ name: '', description: '' });
+      toast({
+        title: "Course created successfully!",
+        description: `${newCourse.name} has been added to your courses.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error creating course",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const createSubject = () => {
-    if (newSubject.name.trim() && selectedCourse) {
-      const subject: Subject = {
-        id: Date.now().toString(),
-        name: newSubject.name,
-        description: newSubject.description,
-        syllabusChecklist: []
-      };
-      
-      setCourses(courses.map(course => 
-        course.id === selectedCourse 
-          ? { ...course, subjects: [...course.subjects, subject] }
-          : course
-      ));
+  const createSubject = async () => {
+    if (!newSubject.name.trim() || !selectedCourse || !user) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('subjects')
+        .insert([{
+          name: newSubject.name,
+          description: newSubject.description,
+          course_id: selectedCourse
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await loadCourses();
       setNewSubject({ name: '', description: '' });
+      toast({
+        title: "Subject created successfully!",
+        description: `${newSubject.name} has been added to your course.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error creating subject",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const processSyllabus = () => {
-    if (!syllabusText.trim() || !selectedCourse || !selectedSubject) return;
+  const processSyllabus = async () => {
+    if (!syllabusText.trim() || !selectedCourse || !selectedSubject || !user) return;
 
-    const lines = syllabusText.split('\n').filter(line => line.trim());
-    const checklistItems: ChecklistItem[] = lines.map((line, index) => ({
-      id: Date.now().toString() + index,
-      content: line.trim(),
-      completed: false
-    }));
+    try {
+      setLoading(true);
+      const lines = syllabusText.split('\n').filter(line => line.trim());
+      const syllabusItems = lines.map(line => ({
+        content: line.trim(),
+        completed: false,
+        subject_id: selectedSubject
+      }));
 
-    setCourses(courses.map(course => 
-      course.id === selectedCourse
-        ? {
-            ...course,
-            subjects: course.subjects.map(subject => 
-              subject.id === selectedSubject 
-                ? { ...subject, syllabusChecklist: [...subject.syllabusChecklist, ...checklistItems] }
-                : subject
-            )
-          }
-        : course
-    ));
-    
-    setSyllabusText('');
+      const { error } = await supabase
+        .from('syllabus_items')
+        .insert(syllabusItems);
+
+      if (error) throw error;
+
+      await loadCourses();
+      setSyllabusText('');
+      toast({
+        title: "Syllabus processed successfully!",
+        description: `${lines.length} items added to your syllabus.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error processing syllabus",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleChecklistItem = (courseId: string, subjectId: string, itemId: string) => {
-    setCourses(courses.map(course => 
-      course.id === courseId
-        ? {
-            ...course,
-            subjects: course.subjects.map(subject => 
-              subject.id === subjectId
-                ? {
-                    ...subject,
-                    syllabusChecklist: subject.syllabusChecklist.map(item => 
-                      item.id === itemId 
-                        ? { 
-                            ...item, 
-                            completed: !item.completed,
-                            dateCompleted: !item.completed ? new Date().toISOString() : undefined
-                          }
-                        : item
-                    )
-                  }
-                : subject
-            )
-          }
-        : course
-    ));
+  const toggleChecklistItem = async (courseId: string, subjectId: string, itemId: string) => {
+    try {
+      const course = courses.find(c => c.id === courseId);
+      const subject = course?.subjects.find(s => s.id === subjectId);
+      const item = subject?.syllabusChecklist.find(i => i.id === itemId);
+      
+      if (!item) return;
+
+      const newCompleted = !item.completed;
+      const { error } = await supabase
+        .from('syllabus_items')
+        .update({
+          completed: newCompleted,
+          date_completed: newCompleted ? new Date().toISOString() : null
+        })
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      await loadCourses();
+      
+      if (newCompleted) {
+        toast({
+          title: "Great progress!",
+          description: "Item marked as completed.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error updating item",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const getDailyProgress = () => {
@@ -241,6 +344,22 @@ const CourseTracker: React.FC = () => {
     return timeline.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "Come back soon to continue your learning journey!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const { completedToday, totalCompleted, totalItems } = getDailyProgress();
   const overallProgress = totalItems > 0 ? (totalCompleted / totalItems) * 100 : 0;
   const courseChartData = getCourseChartData();
@@ -252,14 +371,33 @@ const CourseTracker: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
+        {/* Header with User Info */}
         <header className="text-center mb-12 animate-fade-in">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <div className="hero-gradient p-3 rounded-2xl shadow-glow">
-              <GraduationCap className="h-8 w-8 text-white" />
+          <div className="flex justify-between items-start mb-6">
+            <div></div>
+            <div className="inline-flex items-center gap-3">
+              <div className="hero-gradient p-3 rounded-2xl shadow-glow">
+                <GraduationCap className="h-8 w-8 text-white" />
+              </div>
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Course Tracker
+              </h1>
             </div>
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Course Tracker
-            </h1>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-sm text-muted-foreground">Welcome back,</div>
+                <div className="font-medium">{user?.email}</div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Transform your learning journey with intelligent progress tracking and comprehensive syllabus management
@@ -368,11 +506,11 @@ const CourseTracker: React.FC = () => {
                 </div>
                 <Button 
                   onClick={createCourse} 
-                  disabled={!newCourse.name.trim()}
+                  disabled={!newCourse.name.trim() || loading}
                   className="w-full md:w-auto hero-gradient text-white h-12 px-8 rounded-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Course
+                  {loading ? 'Creating...' : 'Create Course'}
                 </Button>
               </CardContent>
             </Card>
@@ -441,8 +579,8 @@ const CourseTracker: React.FC = () => {
 
         {/* Subjects Tab */}
         {activeTab === 'subjects' && (
-          <div className="space-y-6">
-            <Card>
+          <div className="space-y-6 animate-fade-in">
+            <Card className="card-gradient border-0 shadow-elevated">
               <CardHeader>
                 <CardTitle>Create New Subject</CardTitle>
                 <CardDescription>
@@ -460,6 +598,7 @@ const CourseTracker: React.FC = () => {
                     onChange={(e) => setNewSubject({...newSubject, name: e.target.value})}
                     placeholder="e.g., Calculus"
                     disabled={!selectedCourse}
+                    className="h-12 rounded-xl"
                   />
                 </div>
                 <div className="space-y-2">
@@ -471,13 +610,15 @@ const CourseTracker: React.FC = () => {
                     placeholder="Brief description of the subject"
                     rows={3}
                     disabled={!selectedCourse}
+                    className="rounded-xl"
                   />
                 </div>
                 <Button 
                   onClick={createSubject} 
-                  disabled={!newSubject.name.trim() || !selectedCourse}
+                  disabled={!newSubject.name.trim() || !selectedCourse || loading}
+                  className="hero-gradient text-white h-12 px-8 rounded-xl"
                 >
-                  Create Subject
+                  {loading ? 'Creating...' : 'Create Subject'}
                 </Button>
               </CardContent>
             </Card>
@@ -489,7 +630,7 @@ const CourseTracker: React.FC = () => {
                   {courses.find(c => c.id === selectedCourse)?.subjects.map(subject => (
                     <Card 
                       key={subject.id}
-                      className={`cursor-pointer hover:bg-accent/10 transition-colors ${
+                      className={`cursor-pointer card-gradient hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
                         selectedSubject === subject.id ? 'ring-2 ring-primary' : ''
                       }`}
                       onClick={() => setSelectedSubject(subject.id)}
@@ -513,8 +654,8 @@ const CourseTracker: React.FC = () => {
 
         {/* Syllabus Tab */}
         {activeTab === 'syllabus' && (
-          <div className="space-y-6">
-            <Card>
+          <div className="space-y-6 animate-fade-in">
+            <Card className="card-gradient border-0 shadow-elevated">
               <CardHeader>
                 <CardTitle>Upload Syllabus</CardTitle>
                 <CardDescription>
@@ -528,7 +669,7 @@ const CourseTracker: React.FC = () => {
                     <select
                       value={selectedSubject || ''}
                       onChange={(e) => setSelectedSubject(e.target.value)}
-                      className="w-full p-2 border border-border rounded-md bg-background"
+                      className="w-full p-3 border border-border rounded-xl bg-background h-12"
                     >
                       <option value="">Select a subject</option>
                       {courses.find(c => c.id === selectedCourse)?.subjects.map(subject => (
@@ -548,20 +689,22 @@ const CourseTracker: React.FC = () => {
                     placeholder="Paste your syllabus content here (one topic per line)"
                     rows={6}
                     disabled={!selectedCourse || !selectedSubject}
+                    className="rounded-xl"
                   />
                 </div>
                 <Button 
                   onClick={processSyllabus} 
-                  disabled={!syllabusText.trim() || !selectedCourse || !selectedSubject}
+                  disabled={!syllabusText.trim() || !selectedCourse || !selectedSubject || loading}
+                  className="hero-gradient text-white h-12 px-8 rounded-xl"
                 >
-                  Convert to Checklist
+                  {loading ? 'Processing...' : 'Convert to Checklist'}
                 </Button>
               </CardContent>
             </Card>
 
             {selectedCourse && courses.find(c => c.id === selectedCourse)?.subjects.map(subject => (
               subject.syllabusChecklist.length > 0 && (
-                <Card key={subject.id} className="mt-6">
+                <Card key={subject.id} className="mt-6 card-gradient border-0 shadow-elevated">
                   <CardHeader>
                     <CardTitle>{subject.name} - Syllabus Checklist</CardTitle>
                     <CardDescription>
@@ -572,7 +715,7 @@ const CourseTracker: React.FC = () => {
                   <CardContent>
                     <div className="space-y-2">
                       {subject.syllabusChecklist.map(item => (
-                        <div key={item.id} className="flex items-center space-x-3 p-3 rounded-lg border border-border">
+                        <div key={item.id} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-accent/5 transition-colors">
                           <input
                             type="checkbox"
                             checked={item.completed}
@@ -599,84 +742,86 @@ const CourseTracker: React.FC = () => {
 
         {/* Progress Tab */}
         {activeTab === 'progress' && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fade-in">
             {viewMode === 'overview' ? (
               <>
-                <Card>
+                <Card className="card-gradient border-0 shadow-elevated">
                   <CardHeader>
                     <CardTitle>Study Analytics Overview</CardTitle>
                     <CardDescription>Track your learning progress across all courses</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="stats-card bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-primary/20 p-2 rounded-xl">
-                          <Target className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-primary">{completedToday}</div>
-                          <div className="text-sm text-primary/80">Completed Today</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="stats-card bg-gradient-to-br from-secondary/10 to-secondary/5 border-secondary/20">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-secondary/20 p-2 rounded-xl">
-                          <Award className="h-5 w-5 text-secondary" />
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-secondary">{totalCompleted}</div>
-                          <div className="text-sm text-secondary/80">Total Completed</div>
+                      <div className="stats-card bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-primary/20 p-2 rounded-xl">
+                            <Target className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <div className="text-2xl font-bold text-primary">{completedToday}</div>
+                            <div className="text-sm text-primary/80">Completed Today</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="stats-card bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-accent/20 p-2 rounded-xl">
-                          <BookOpen className="h-5 w-5 text-accent" />
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-accent">{totalItems}</div>
-                          <div className="text-sm text-accent/80">Total Items</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="stats-card bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-warning/20 p-2 rounded-xl">
-                          <GraduationCap className="h-5 w-5 text-warning" />
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-warning">{courses.length}</div>
-                          <div className="text-sm text-warning/80">Active Courses</div>
+                      <div className="stats-card bg-gradient-to-br from-secondary/10 to-secondary/5 border-secondary/20">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-secondary/20 p-2 rounded-xl">
+                            <Award className="h-5 w-5 text-secondary" />
+                          </div>
+                          <div>
+                            <div className="text-2xl font-bold text-secondary">{totalCompleted}</div>
+                            <div className="text-sm text-secondary/80">Total Completed</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                      <div className="stats-card bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-accent/20 p-2 rounded-xl">
+                            <BookOpen className="h-5 w-5 text-accent" />
+                          </div>
+                          <div>
+                            <div className="text-2xl font-bold text-accent">{totalItems}</div>
+                            <div className="text-sm text-accent/80">Total Items</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="stats-card bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-warning/20 p-2 rounded-xl">
+                            <GraduationCap className="h-5 w-5 text-warning" />
+                          </div>
+                          <div>
+                            <div className="text-2xl font-bold text-warning">{courses.length}</div>
+                            <div className="text-sm text-warning/80">Active Courses</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Course Progress Bar Chart */}
-                    <div className="mb-8">
-                      <h3 className="font-semibold mb-4">Course Progress Overview</h3>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={courseChartData} layout="vertical">
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis type="number" />
-                            <YAxis type="category" dataKey="name" width={100} />
-                            <Tooltip 
-                              formatter={(value: number, name: string) => {
-                                if (name === 'completed') return [value, 'Completed Items'];
-                                if (name === 'remaining') return [value, 'Remaining Items'];
-                                return [value, name];
-                              }}
-                            />
-                            <Bar dataKey="completed" stackId="a" fill="#10B981" name="Completed" />
-                            <Bar dataKey="remaining" stackId="a" fill="#E5E7EB" name="Remaining" />
-                          </BarChart>
-                        </ResponsiveContainer>
+                    {courseChartData.length > 0 && (
+                      <div className="mb-8">
+                        <h3 className="font-semibold mb-4">Course Progress Overview</h3>
+                        <div className="h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={courseChartData} layout="vertical">
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis type="number" />
+                              <YAxis type="category" dataKey="name" width={100} />
+                              <Tooltip 
+                                formatter={(value: number, name: string) => {
+                                  if (name === 'completed') return [value, 'Completed Items'];
+                                  if (name === 'remaining') return [value, 'Remaining Items'];
+                                  return [value, name];
+                                }}
+                              />
+                              <Bar dataKey="completed" stackId="a" fill="#10B981" name="Completed" />
+                              <Bar dataKey="remaining" stackId="a" fill="#E5E7EB" name="Remaining" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Individual Course Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -685,7 +830,7 @@ const CourseTracker: React.FC = () => {
                         return (
                           <Card 
                             key={course.id} 
-                            className="cursor-pointer hover:shadow-md transition-shadow"
+                            className="cursor-pointer card-gradient border-0 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105"
                             onClick={() => {
                               setSelectedCourseForDetail(course.id);
                               setViewMode('course-detail');
@@ -701,7 +846,11 @@ const CourseTracker: React.FC = () => {
                               <CardDescription>{course.description}</CardDescription>
                             </CardHeader>
                             <CardContent>
-                              <Progress value={progress.percentage} className="h-2 mb-2" />
+                              <div className="relative mb-2">
+                                <Progress value={progress.percentage} className="h-2 bg-muted/50" />
+                                <div className="absolute inset-0 h-2 bg-progress-gradient rounded-full" 
+                                     style={{ width: `${progress.percentage}%` }} />
+                              </div>
                               <div className="text-sm text-muted-foreground flex justify-between">
                                 <span>{progress.completed}/{progress.total} completed</span>
                                 <span>{course.subjects.length} subjects</span>
@@ -741,7 +890,7 @@ const CourseTracker: React.FC = () => {
             ) : (
               /* Course Detail View */
               selectedCourseForDetail && (
-                <Card>
+                <Card className="card-gradient border-0 shadow-elevated">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
@@ -756,6 +905,7 @@ const CourseTracker: React.FC = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => setViewMode('overview')}
+                        className="rounded-xl"
                       >
                         Back to Overview
                       </Button>
@@ -763,29 +913,31 @@ const CourseTracker: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     {/* Subject Progress Pie Chart */}
-                    <div className="mb-8">
-                      <h3 className="font-semibold mb-4">Subject Progress Distribution</h3>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={getSubjectProgressData(selectedCourseForDetail)}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                              label={({ name, value }) => `${name}: ${Math.round(value)}%`}
-                            >
-                              {getSubjectProgressData(selectedCourseForDetail).map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip formatter={(value: number) => [`${Math.round(value)}%`, 'Completion']} />
-                          </PieChart>
-                        </ResponsiveContainer>
+                    {getSubjectProgressData(selectedCourseForDetail).length > 0 && (
+                      <div className="mb-8">
+                        <h3 className="font-semibold mb-4">Subject Progress Distribution</h3>
+                        <div className="h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={getSubjectProgressData(selectedCourseForDetail)}
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={80}
+                                fill="#8884d8"
+                                dataKey="value"
+                                label={({ name, value }) => `${name}: ${Math.round(value)}%`}
+                              >
+                                {getSubjectProgressData(selectedCourseForDetail).map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip formatter={(value: number) => [`${Math.round(value)}%`, 'Completion']} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Subject Details */}
                     <div className="space-y-4">
@@ -793,7 +945,7 @@ const CourseTracker: React.FC = () => {
                       {courses.find(c => c.id === selectedCourseForDetail)?.subjects.map((subject, index) => {
                         const progress = getSubjectProgressData(selectedCourseForDetail).find(s => s.name === subject.name);
                         return (
-                          <Card key={subject.id}>
+                          <Card key={subject.id} className="card-gradient border-0 shadow-card">
                             <CardHeader>
                               <CardTitle className="text-lg flex justify-between items-center">
                                 {subject.name}
@@ -804,13 +956,16 @@ const CourseTracker: React.FC = () => {
                               <CardDescription>{subject.description}</CardDescription>
                             </CardHeader>
                             <CardContent>
-                              <Progress 
-                                value={progress ? progress.value : 0} 
-                                className="h-2 mb-2" 
-                                style={{ 
-                                  ['--progress-primary' as any]: COLORS[index % COLORS.length] 
-                                }}
-                              />
+                              <div className="relative mb-2">
+                                <Progress value={progress ? progress.value : 0} className="h-2 bg-muted/50" />
+                                <div 
+                                  className="absolute inset-0 h-2 rounded-full" 
+                                  style={{ 
+                                    width: `${progress ? progress.value : 0}%`,
+                                    background: COLORS[index % COLORS.length]
+                                  }} 
+                                />
+                              </div>
                               <div className="text-sm text-muted-foreground">
                                 {progress?.completed}/{progress?.total} items completed
                               </div>
