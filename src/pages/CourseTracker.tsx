@@ -7,10 +7,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { BookOpen, GraduationCap, Target, TrendingUp, Clock, Award, Plus, ChevronRight, LogOut, User } from "lucide-react";
+import { BookOpen, GraduationCap, Target, TrendingUp, Clock, Award, Plus, ChevronRight, LogOut, User, Settings, FileText, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 interface Subject {
   id: string;
@@ -45,15 +55,34 @@ const CourseTracker: React.FC = () => {
   const [viewMode, setViewMode] = useState<'overview' | 'course-detail'>('overview');
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
       loadCourses();
+      fetchUserProfile();
     }
   }, [user]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user?.id)
+        .single();
+      
+      if (data) {
+        setUserProfile(data);
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
 
   const loadCourses = async () => {
     try {
@@ -384,19 +413,54 @@ const CourseTracker: React.FC = () => {
               </h1>
             </div>
             <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-sm text-muted-foreground">Welcome back,</div>
-                <div className="font-medium">{user?.email}</div>
-              </div>
               <Button 
                 variant="outline" 
-                size="sm" 
-                onClick={handleSignOut}
-                className="gap-2"
+                size="sm"
+                onClick={() => navigate('/reports')}
+                className="flex items-center gap-2"
               >
-                <LogOut className="h-4 w-4" />
-                Sign Out
+                <FileText className="h-4 w-4" />
+                Reports
               </Button>
+              <ThemeToggle />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={userProfile?.avatar_url} alt={userProfile?.display_name} />
+                      <AvatarFallback>
+                        {userProfile?.display_name?.charAt(0) || user?.email?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {userProfile?.display_name || "User"}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/settings')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/reports')}>
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    Reports
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
