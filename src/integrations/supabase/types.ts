@@ -51,6 +51,7 @@ export type Database = {
           id: string
           location: string | null
           theme_preference: string | null
+          tutorial_completed: boolean | null
           updated_at: string
           user_id: string
         }
@@ -63,6 +64,7 @@ export type Database = {
           id?: string
           location?: string | null
           theme_preference?: string | null
+          tutorial_completed?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -75,6 +77,7 @@ export type Database = {
           id?: string
           location?: string | null
           theme_preference?: string | null
+          tutorial_completed?: boolean | null
           updated_at?: string
           user_id?: string
         }

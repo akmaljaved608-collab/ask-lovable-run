@@ -1065,6 +1065,19 @@ const CourseTracker: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Course Dialog */}
+      <EditCourseDialog
+        course={editingCourse}
+        open={!!editingCourse}
+        onOpenChange={(open) => !open && setEditingCourse(null)}
+        onUpdate={loadCourses}
+      />
+
+      {/* Onboarding Tutorial */}
+      {showTutorial && (
+        <OnboardingTutorial onComplete={() => setShowTutorial(false)} />
+      )}
     </div>
   );
 };
