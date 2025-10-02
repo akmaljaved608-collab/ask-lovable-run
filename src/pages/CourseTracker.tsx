@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { BookOpen, GraduationCap, Target, TrendingUp, Clock, Award, Plus, ChevronRight, LogOut, User, Settings, FileText, BarChart3 } from "lucide-react";
+import { BookOpen, GraduationCap, Target, TrendingUp, Clock, Award, Plus, ChevronRight, LogOut, User, Settings, FileText, BarChart3, Edit } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { EditCourseDialog } from "@/components/EditCourseDialog";
+import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 
 interface Subject {
   id: string;
@@ -56,6 +58,8 @@ const CourseTracker: React.FC = () => {
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const { user, signOut } = useAuth();
   const { toast } = useToast();
@@ -74,10 +78,14 @@ const CourseTracker: React.FC = () => {
         .from("profiles")
         .select("*")
         .eq("user_id", user?.id)
-        .single();
+        .maybeSingle();
       
       if (data) {
         setUserProfile(data);
+        // Show tutorial if user hasn't completed it
+        if (!data.tutorial_completed) {
+          setShowTutorial(true);
+        }
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
@@ -585,15 +593,17 @@ const CourseTracker: React.FC = () => {
                 return (
                   <Card 
                     key={course.id} 
-                    className={`group cursor-pointer card-gradient border-0 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
+                    className={`group card-gradient border-0 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
                       selectedCourse === course.id ? 'ring-2 ring-primary shadow-glow' : ''
                     }`}
-                    onClick={() => setSelectedCourse(course.id)}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
                     <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div 
+                          className="flex-1 cursor-pointer"
+                          onClick={() => setSelectedCourse(course.id)}
+                        >
                           <CardTitle className="text-xl mb-2 group-hover:text-primary transition-colors">
                             {course.name}
                           </CardTitle>
@@ -601,7 +611,17 @@ const CourseTracker: React.FC = () => {
                             {course.description || "No description available"}
                           </CardDescription>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingCourse(course);
+                          }}
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
