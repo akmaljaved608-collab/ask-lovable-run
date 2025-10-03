@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, TrendingUp, Target, Clock, Download, BarChart3 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subWeeks, subMonths } from "date-fns";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
 
 interface ProgressData {
   date: string;
@@ -410,21 +410,20 @@ export default function Reports() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80">
+                  <div className="h-96">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={courseProgress.slice(0, 10)}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis 
+                      <RadarChart data={courseProgress.slice(0, 8)}>
+                        <PolarGrid stroke="hsl(var(--border))" />
+                        <PolarAngleAxis 
                           dataKey="course_name" 
                           stroke="hsl(var(--muted-foreground))"
                           fontSize={12}
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
                         />
-                        <YAxis 
+                        <PolarRadiusAxis 
+                          angle={90} 
+                          domain={[0, 100]} 
                           stroke="hsl(var(--muted-foreground))"
-                          fontSize={12}
+                          fontSize={10}
                         />
                         <Tooltip 
                           contentStyle={{
@@ -432,13 +431,17 @@ export default function Reports() {
                             border: "1px solid hsl(var(--border))",
                             borderRadius: "8px"
                           }}
+                          formatter={(value: number) => `${Math.round(value)}%`}
                         />
-                        <Bar 
+                        <Radar 
+                          name="Completion Rate" 
                           dataKey="completion_rate" 
+                          stroke="hsl(var(--primary))"
                           fill="hsl(var(--primary))"
-                          radius={[4, 4, 0, 0]}
+                          fillOpacity={0.5}
+                          strokeWidth={2}
                         />
-                      </BarChart>
+                      </RadarChart>
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
