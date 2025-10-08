@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { BookOpen, GraduationCap, Target, TrendingUp, Clock, Award, Plus, ChevronRight, LogOut, User, Settings, FileText, BarChart3, Edit } from "lucide-react";
+import { BookOpen, GraduationCap, Target, TrendingUp, Clock, Award, Plus, ChevronRight, LogOut, User, Settings, FileText, BarChart3, Edit, Copy } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -381,6 +381,75 @@ const CourseTracker: React.FC = () => {
     return timeline.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
+  const handleDuplicateCourse = async (courseId: string) => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      
+      // Get the original course with all its data
+      const originalCourse = courses.find(c => c.id === courseId);
+      if (!originalCourse) return;
+
+      // Create duplicate course
+      const { data: newCourse, error: courseError } = await supabase
+        .from('courses')
+        .insert([{
+          name: `${originalCourse.name} (Copy)`,
+          description: originalCourse.description,
+          user_id: user.id
+        }])
+        .select()
+        .single();
+
+      if (courseError) throw courseError;
+
+      // Duplicate all subjects
+      for (const subject of originalCourse.subjects) {
+        const { data: newSubject, error: subjectError } = await supabase
+          .from('subjects')
+          .insert([{
+            name: subject.name,
+            description: subject.description,
+            course_id: newCourse.id
+          }])
+          .select()
+          .single();
+
+        if (subjectError) throw subjectError;
+
+        // Duplicate all syllabus items for this subject
+        if (subject.syllabusChecklist.length > 0) {
+          const syllabusItems = subject.syllabusChecklist.map(item => ({
+            content: item.content,
+            completed: false,
+            subject_id: newSubject.id
+          }));
+
+          const { error: syllabusError } = await supabase
+            .from('syllabus_items')
+            .insert(syllabusItems);
+
+          if (syllabusError) throw syllabusError;
+        }
+      }
+
+      await loadCourses();
+      toast({
+        title: "Course duplicated successfully!",
+        description: `Created a copy of "${originalCourse.name}"`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error duplicating course",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -611,17 +680,32 @@ const CourseTracker: React.FC = () => {
                             {course.description || "No description available"}
                           </CardDescription>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingCourse(course);
-                          }}
-                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDuplicateCourse(course.id);
+                            }}
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Duplicate course"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingCourse(course);
+                            }}
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Edit course"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
