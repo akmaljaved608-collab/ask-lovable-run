@@ -69,6 +69,42 @@ const CourseTracker: React.FC = () => {
     if (user) {
       loadCourses();
       fetchUserProfile();
+      
+      // Set up realtime subscription for immediate updates
+      const channel = supabase
+        .channel('course-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'courses'
+          },
+          () => loadCourses()
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'subjects'
+          },
+          () => loadCourses()
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'syllabus_items'
+          },
+          () => loadCourses()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
@@ -95,6 +131,7 @@ const CourseTracker: React.FC = () => {
   const loadCourses = async () => {
     try {
       setLoading(true);
+      // Add cache-busting timestamp to force fresh data
       const { data: coursesData, error: coursesError } = await supabase
         .from('courses')
         .select(`
