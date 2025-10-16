@@ -21,7 +21,7 @@ const tutorialSteps = [
     title: "Create Your First Course 📚",
     description: "Start by creating a course - this could be any subject you're studying.",
     icon: BookOpen,
-    content: "Click on the 'Courses' tab, fill in the course name and description, then click 'Create Course'. You can edit, duplicate, or delete courses anytime by hovering over them.",
+    content: "Click on the 'Courses' tab, fill in the course name and description, then click 'Create Course'. You can edit, duplicate, or delete courses anytime by hovering over them. Ads help keep this app free - thank you for your support!",
   },
   {
     title: "Add Subjects to Your Course 🎯",

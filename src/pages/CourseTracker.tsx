@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { AdBanner } from "@/components/AdBanner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -1199,6 +1200,9 @@ const CourseTracker: React.FC = () => {
       {showTutorial && (
         <OnboardingTutorial onComplete={() => setShowTutorial(false)} />
       )}
+
+      {/* AdMob Banner */}
+      <AdBanner />
     </div>
   );
 };
