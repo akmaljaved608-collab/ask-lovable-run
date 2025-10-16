@@ -51,11 +51,48 @@ Replace the test ad unit IDs in the following files with your real AdMob ad unit
 </array>
 ```
 
-#### For Android (android/app/src/main/AndroidManifest.xml):
+#### For Android:
+
+**1. Update settings.gradle (android/settings.gradle):**
+```gradle
+pluginManagement {
+  repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+  }
+}
+
+dependencyResolutionManagement {
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  repositories {
+    google()
+    mavenCentral()
+  }
+}
+
+rootProject.name = "coursetracker"
+include(":app")
+```
+
+**2. Add dependency to build.gradle (android/app/build.gradle):**
+```gradle
+dependencies {
+  implementation("com.google.android.gms:play-services-ads:24.7.0")
+}
+```
+
+**3. Update AndroidManifest.xml (android/app/src/main/AndroidManifest.xml):**
+Add this inside the `<application>` tag:
 ```xml
 <meta-data
     android:name="com.google.android.gms.ads.APPLICATION_ID"
     android:value="ca-app-pub-1034414616463908~4487483497"/>
+```
+
+**4. (Optional) For Android 13 compatibility, add AD_ID permission in AndroidManifest.xml:**
+```xml
+<uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 ```
 
 ### 5. Run on Device/Emulator
