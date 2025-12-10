@@ -8,8 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, TrendingUp, Target, Clock, Download, BarChart3 } from "lucide-react";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subWeeks, subMonths } from "date-fns";
+import { format, startOfWeek, startOfMonth, subWeeks, subMonths, startOfDay, subDays, isSameDay } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { getAchievementsForExport } from "@/components/StreakAchievements";
+import { getCalendarDataForExport } from "@/components/ProgressCalendar";
 
 interface ProgressData {
   date: string;
@@ -33,8 +35,10 @@ export default function Reports() {
     totalCompleted: 0,
     averageDaily: 0,
     streak: 0,
-    totalCourses: 0
+    totalCourses: 0,
+    activeDays: 0
   });
+  const [calendarData, setCalendarData] = useState<{ date: string; courseName: string; subjectName: string; content: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -140,19 +144,59 @@ export default function Reports() {
 
       setCourseProgress(courseProgressData);
 
+      // Build calendar data for export
+      const calendarItems: { date: string; courseName: string; subjectName: string; content: string }[] = [];
+      courses?.forEach(course => {
+        course.subjects.forEach((subject: any) => {
+          subject.syllabus_items.forEach((item: any) => {
+            if (item.completed && item.date_completed) {
+              calendarItems.push({
+                date: item.date_completed,
+                courseName: course.name,
+                subjectName: subject.name || 'Unknown Subject',
+                content: item.content || 'Unknown Item'
+              });
+            }
+          });
+        });
+      });
+      setCalendarData(calendarItems);
+
       // Calculate stats
       const totalCompleted = completions?.length || 0;
       const daysDiff = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
       const averageDaily = totalCompleted / daysDiff;
 
-      // Calculate streak (simplified)
+      // Calculate active days
+      const activeDays = Array.from(progressMap.entries()).filter(([_, data]) => data.completed > 0).length;
+
+      // Calculate streak
       let streak = 0;
-      const recentData = Array.from(progressMap.entries()).slice(-30);
-      for (let i = recentData.length - 1; i >= 0; i--) {
-        if (recentData[i][1].completed > 0) {
-          streak++;
-        } else {
-          break;
+      const sortedDates = Array.from(progressMap.entries())
+        .filter(([_, data]) => data.completed > 0)
+        .map(([date]) => new Date(date))
+        .sort((a, b) => b.getTime() - a.getTime());
+
+      if (sortedDates.length > 0) {
+        const today = startOfDay(new Date());
+        const yesterday = subDays(today, 1);
+        const mostRecent = startOfDay(sortedDates[0]);
+        
+        if (isSameDay(mostRecent, today) || isSameDay(mostRecent, yesterday)) {
+          streak = 1;
+          let currentDate = mostRecent;
+          
+          for (let i = 1; i < sortedDates.length; i++) {
+            const prevDate = subDays(currentDate, 1);
+            const nextDate = startOfDay(sortedDates[i]);
+            
+            if (isSameDay(nextDate, prevDate)) {
+              streak++;
+              currentDate = nextDate;
+            } else {
+              break;
+            }
+          }
         }
       }
 
@@ -160,7 +204,8 @@ export default function Reports() {
         totalCompleted,
         averageDaily: Math.round(averageDaily * 100) / 100,
         streak,
-        totalCourses: courses?.length || 0
+        totalCourses: courses?.length || 0,
+        activeDays
       });
 
     } catch (error) {
@@ -171,54 +216,96 @@ export default function Reports() {
   };
 
   const generatePDFReport = () => {
-    // Create a simple HTML report for printing/PDF
+    const achievements = getAchievementsForExport(stats.streak, stats.totalCompleted, stats.activeDays);
+    const calendarExport = getCalendarDataForExport(calendarData);
+    const unlockedAchievements = achievements.filter(a => a.unlocked);
+
     const reportContent = `
       <!DOCTYPE html>
       <html>
       <head>
         <title>Course Progress Report</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 40px; }
+          body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
           .header { text-align: center; margin-bottom: 30px; }
           .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px; }
-          .stat-card { border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
-          .courses { margin-top: 30px; }
-          .course-item { margin-bottom: 15px; padding: 15px; border-left: 4px solid #007bff; }
+          .stat-card { border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #f9f9f9; }
+          .section { margin-top: 30px; }
+          .section h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+          .course-item { margin-bottom: 15px; padding: 15px; border-left: 4px solid #007bff; background: #f5f5f5; }
+          .achievement { display: inline-block; margin: 5px; padding: 8px 12px; border-radius: 20px; font-size: 12px; }
+          .achievement.unlocked { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+          .achievement.locked { background: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; }
+          .calendar-day { margin-bottom: 20px; padding: 15px; border-left: 4px solid #28a745; background: #f5f5f5; }
+          .calendar-day h4 { margin: 0 0 10px 0; color: #28a745; }
+          .calendar-item { margin: 5px 0; padding: 8px; background: white; border-radius: 4px; }
+          .calendar-item small { color: #6c757d; }
         </style>
       </head>
       <body>
         <div class="header">
-          <h1>Course Progress Report</h1>
+          <h1>📚 Course Progress Report</h1>
           <p>Generated on ${format(new Date(), "MMMM dd, yyyy")}</p>
         </div>
         
         <div class="stats">
           <div class="stat-card">
-            <h3>Total Completed</h3>
+            <h3>🎯 Total Completed</h3>
             <p style="font-size: 24px; color: #007bff;">${stats.totalCompleted}</p>
           </div>
           <div class="stat-card">
-            <h3>Daily Average</h3>
+            <h3>📈 Daily Average</h3>
             <p style="font-size: 24px; color: #28a745;">${stats.averageDaily}</p>
           </div>
           <div class="stat-card">
-            <h3>Current Streak</h3>
+            <h3>🔥 Current Streak</h3>
             <p style="font-size: 24px; color: #fd7e14;">${stats.streak} days</p>
           </div>
           <div class="stat-card">
-            <h3>Total Courses</h3>
-            <p style="font-size: 24px; color: #6f42c1;">${stats.totalCourses}</p>
+            <h3>📅 Active Days</h3>
+            <p style="font-size: 24px; color: #17a2b8;">${stats.activeDays}</p>
           </div>
         </div>
 
-        <div class="courses">
-          <h2>Course Progress</h2>
+        <div class="section">
+          <h2>🏆 Achievements (${unlockedAchievements.length}/${achievements.length})</h2>
+          <div>
+            ${achievements.map(a => `
+              <span class="achievement ${a.unlocked ? 'unlocked' : 'locked'}">
+                ${a.unlocked ? '✅' : '🔒'} ${a.name} - ${a.description}
+              </span>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>📖 Course Progress</h2>
           ${courseProgress.map(course => `
             <div class="course-item">
               <h3>${course.course_name}</h3>
               <p>Progress: ${course.completed_items}/${course.total_items} (${Math.round(course.completion_rate)}%)</p>
+              <div style="background: #e9ecef; border-radius: 4px; height: 8px; margin-top: 10px;">
+                <div style="background: #007bff; border-radius: 4px; height: 8px; width: ${course.completion_rate}%;"></div>
+              </div>
             </div>
           `).join('')}
+        </div>
+
+        <div class="section">
+          <h2>📆 Activity Calendar</h2>
+          ${calendarExport.length === 0 ? '<p>No activity recorded yet.</p>' : 
+            calendarExport.slice(0, 30).map(day => `
+              <div class="calendar-day">
+                <h4>${day.formattedDate} - ${day.itemCount} item${day.itemCount > 1 ? 's' : ''} completed</h4>
+                ${day.items.map(item => `
+                  <div class="calendar-item">
+                    <small>${item.courseName} • ${item.subjectName}</small><br/>
+                    ${item.content}
+                  </div>
+                `).join('')}
+              </div>
+            `).join('')}
+          ${calendarExport.length > 30 ? `<p><em>...and ${calendarExport.length - 30} more days</em></p>` : ''}
         </div>
       </body>
       </html>
