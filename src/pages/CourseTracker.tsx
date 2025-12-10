@@ -24,6 +24,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { EditCourseDialog } from "@/components/EditCourseDialog";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
+import { ProgressCalendar } from "@/components/ProgressCalendar";
 
 interface Subject {
   id: string;
@@ -392,31 +393,25 @@ const CourseTracker: React.FC = () => {
     });
   };
 
-  const getTimelineData = () => {
-    const timeline: { date: string; count: number; items: string[] }[] = [];
+  const getCompletedItemsForCalendar = () => {
+    const items: { date: string; courseName: string; subjectName: string; content: string }[] = [];
     
     courses.forEach(course => {
       course.subjects.forEach(subject => {
         subject.syllabusChecklist.forEach(item => {
           if (item.dateCompleted) {
-            const date = item.dateCompleted.split('T')[0];
-            const existing = timeline.find(t => t.date === date);
-            if (existing) {
-              existing.count++;
-              existing.items.push(`${course.name} - ${subject.name}: ${item.content}`);
-            } else {
-              timeline.push({
-                date,
-                count: 1,
-                items: [`${course.name} - ${subject.name}: ${item.content}`]
-              });
-            }
+            items.push({
+              date: item.dateCompleted,
+              courseName: course.name,
+              subjectName: subject.name,
+              content: item.content
+            });
           }
         });
       });
     });
 
-    return timeline.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return items;
   };
 
   const handleDuplicateCourse = async (courseId: string) => {
@@ -507,7 +502,7 @@ const CourseTracker: React.FC = () => {
   const { completedToday, totalCompleted, totalItems } = getDailyProgress();
   const overallProgress = totalItems > 0 ? (totalCompleted / totalItems) * 100 : 0;
   const courseChartData = getCourseChartData();
-  const timelineData = getTimelineData();
+  const completedItemsForCalendar = getCompletedItemsForCalendar();
 
   // Modern color palette
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'];
@@ -1067,29 +1062,8 @@ const CourseTracker: React.FC = () => {
                       })}
                     </div>
 
-                    {/* Timeline View */}
-                    {timelineData.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold mb-4">Study Timeline</h3>
-                        <div className="space-y-3">
-                          {timelineData.slice(-10).map((day, index) => (
-                            <div key={index} className="p-3 border border-border rounded-lg bg-muted/50">
-                              <div className="font-medium text-primary">
-                                {new Date(day.date).toLocaleDateString()} - {day.count} items completed
-                              </div>
-                              <div className="text-sm text-muted-foreground mt-1">
-                                {day.items.slice(0, 3).map((item, i) => (
-                                  <div key={i}>• {item}</div>
-                                ))}
-                                {day.items.length > 3 && (
-                                  <div className="text-xs">+{day.items.length - 3} more items</div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    {/* Progress Calendar */}
+                    <ProgressCalendar completedItems={completedItemsForCalendar} />
                   </CardContent>
                 </Card>
               </>
