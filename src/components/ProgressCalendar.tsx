@@ -3,7 +3,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Flame, CalendarDays } from "lucide-react";
-import { format, isSameDay, startOfDay, subDays, isAfter, isBefore } from "date-fns";
+import { format, isSameDay, startOfDay, subDays, isAfter } from "date-fns";
+import { StreakAchievements } from "./StreakAchievements";
 
 interface CompletedItem {
   date: string;
@@ -95,7 +96,7 @@ export const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ completedIte
   return (
     <div className="space-y-4">
       {/* Streak Display */}
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-4 mb-4 flex-wrap">
         <div className="flex items-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 px-4 py-2 rounded-xl border border-orange-500/30">
           <Flame className="h-5 w-5 text-orange-500" />
           <span className="font-bold text-orange-500">{currentStreak}</span>
@@ -107,6 +108,13 @@ export const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ completedIte
           <span className="text-sm text-muted-foreground">active days</span>
         </div>
       </div>
+
+      {/* Achievements */}
+      <StreakAchievements 
+        currentStreak={currentStreak}
+        totalCompleted={completedItems.length}
+        activeDays={progressDates.length}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Calendar */}
@@ -175,4 +183,30 @@ export const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ completedIte
       </div>
     </div>
   );
+};
+
+// Export function for getting calendar data
+export const getCalendarDataForExport = (completedItems: { date: string; courseName: string; subjectName: string; content: string }[]) => {
+  const grouped: Record<string, { courseName: string; subjectName: string; content: string }[]> = {};
+  
+  completedItems.forEach(item => {
+    const dateKey = item.date.split('T')[0];
+    if (!grouped[dateKey]) {
+      grouped[dateKey] = [];
+    }
+    grouped[dateKey].push({
+      courseName: item.courseName,
+      subjectName: item.subjectName,
+      content: item.content
+    });
+  });
+
+  return Object.entries(grouped)
+    .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
+    .map(([date, items]) => ({
+      date,
+      formattedDate: format(new Date(date), 'MMMM d, yyyy'),
+      itemCount: items.length,
+      items
+    }));
 };
