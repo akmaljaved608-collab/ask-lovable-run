@@ -12,7 +12,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Plus, Trophy, XCircle, CheckCircle, TrendingUp, BarChart3, Trash2, CalendarIcon, Edit2 } from "lucide-react";
+import { Plus, Trophy, XCircle, CheckCircle, TrendingUp, BarChart3, Trash2, CalendarIcon, Edit2, FileText, LineChart as LineChartIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 
 interface Subject {
@@ -60,6 +60,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [scoresDialogOpen, setScoresDialogOpen] = useState(false);
   const [selectedTest, setSelectedTest] = useState<TestSeries | null>(null);
+  const [activeView, setActiveView] = useState<'tests' | 'reports' | 'analysis'>('tests');
   const [editingScoresTest, setEditingScoresTest] = useState<TestSeries | null>(null);
   
   // Create form state
@@ -653,6 +654,39 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
         </DialogContent>
       </Dialog>
 
+      {/* Sub-navigation tabs */}
+      {testSeriesList.length > 0 && (
+        <div className="flex gap-2 p-1 bg-muted/50 rounded-xl w-fit">
+          <Button
+            variant={activeView === 'tests' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveView('tests')}
+            className={`gap-2 rounded-lg ${activeView === 'tests' ? 'hero-gradient text-white' : ''}`}
+          >
+            <Trophy className="h-4 w-4" />
+            Tests
+          </Button>
+          <Button
+            variant={activeView === 'reports' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveView('reports')}
+            className={`gap-2 rounded-lg ${activeView === 'reports' ? 'hero-gradient text-white' : ''}`}
+          >
+            <FileText className="h-4 w-4" />
+            Reports
+          </Button>
+          <Button
+            variant={activeView === 'analysis' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveView('analysis')}
+            className={`gap-2 rounded-lg ${activeView === 'analysis' ? 'hero-gradient text-white' : ''}`}
+          >
+            <LineChartIcon className="h-4 w-4" />
+            Analysis
+          </Button>
+        </div>
+      )}
+
       {/* Test Series List */}
       {testSeriesList.length === 0 ? (
         <Card className="card-gradient border-0 shadow-elevated">
@@ -664,233 +698,390 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
         </Card>
       ) : (
         <>
-          {/* Test Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {testSeriesList.map((test) => {
-              const result = calculateTestResult(test);
-              return (
-                <Card 
-                  key={test.id}
-                  className={`cursor-pointer card-gradient border-0 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
-                    selectedTest?.id === test.id ? 'ring-2 ring-primary' : ''
-                  }`}
-                  onClick={() => setSelectedTest(test)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{test.name}</CardTitle>
-                        <CardDescription>
-                          {formatDateRange(test.start_date, test.end_date)}
-                        </CardDescription>
-                      </div>
-                      {result.hasScores ? (
-                        <Badge 
-                          variant={result.passed ? "default" : "destructive"}
-                          className={result.passed ? "bg-green-500" : ""}
-                        >
-                          {result.passed ? (
-                            <><CheckCircle className="h-3 w-3 mr-1" /> Pass</>
-                          ) : (
-                            <><XCircle className="h-3 w-3 mr-1" /> Fail</>
-                          )}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline">Pending</Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {result.hasScores ? (
-                      <>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Score</span>
-                          <span className="font-semibold">{result.totalScore}/{test.aggregate_max_marks}</span>
+          {/* Tests View - Test Cards Grid */}
+          {activeView === 'tests' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {testSeriesList.map((test) => {
+                const result = calculateTestResult(test);
+                return (
+                  <Card 
+                    key={test.id}
+                    className={`cursor-pointer card-gradient border-0 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
+                      selectedTest?.id === test.id ? 'ring-2 ring-primary' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedTest(test);
+                      setActiveView('reports');
+                    }}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{test.name}</CardTitle>
+                          <CardDescription>
+                            {formatDateRange(test.start_date, test.end_date)}
+                          </CardDescription>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Pass Mark</span>
-                          <span className={result.aggregatePassed ? "text-green-500" : "text-destructive"}>
-                            {test.aggregate_pass_mark}
-                          </span>
-                        </div>
-                        {!result.allSubjectsPassed && (
-                          <p className="text-xs text-destructive">
-                            {result.failedSubjects.length} subject(s) below pass mark
-                          </p>
-                        )}
-                      </>
-                    ) : (
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openScoreEntry(test);
-                        }}
-                      >
-                        <Edit2 className="h-3 w-3 mr-1" />
-                        Enter Scores
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Detailed View for Selected Test */}
-          {selectedTest && (
-            <Card className="card-gradient border-0 shadow-elevated">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl">{selectedTest.name} - Detailed Analysis</CardTitle>
-                    <CardDescription>
-                      {formatDateRange(selectedTest.start_date, selectedTest.end_date)}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => openScoreEntry(selectedTest)}
-                    >
-                      <Edit2 className="h-4 w-4 mr-1" />
-                      Edit Scores
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => deleteTestSeries(selectedTest.id)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Subject-wise Breakdown */}
-                <div>
-                  <h4 className="font-semibold mb-4">Subject-wise Performance</h4>
-                  <div className="space-y-3">
-                    {selectedTest.scores.map(score => {
-                      const passed = score.score_obtained >= score.pass_mark;
-                      const percentage = score.max_marks > 0 ? (score.score_obtained / score.max_marks) * 100 : 0;
-                      return (
-                        <div key={score.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            {passed ? (
-                              <CheckCircle className="h-5 w-5 text-green-500" />
+                        {result.hasScores ? (
+                          <Badge 
+                            variant={result.passed ? "default" : "destructive"}
+                            className={result.passed ? "bg-green-500" : ""}
+                          >
+                            {result.passed ? (
+                              <><CheckCircle className="h-3 w-3 mr-1" /> Pass</>
                             ) : (
-                              <XCircle className="h-5 w-5 text-destructive" />
+                              <><XCircle className="h-3 w-3 mr-1" /> Fail</>
                             )}
-                            <span className="font-medium">{score.subject_name}</span>
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">Pending</Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {result.hasScores ? (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Score</span>
+                            <span className="font-semibold">{result.totalScore}/{test.aggregate_max_marks}</span>
                           </div>
-                          <div className="flex items-center gap-4 text-sm">
-                            <span className="text-muted-foreground">
-                              Pass: {score.pass_mark}
-                            </span>
-                            <span className={`font-semibold ${passed ? 'text-green-500' : 'text-destructive'}`}>
-                              {score.score_obtained}/{score.max_marks} ({percentage.toFixed(1)}%)
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Pass Mark</span>
+                            <span className={result.aggregatePassed ? "text-green-500" : "text-destructive"}>
+                              {test.aggregate_pass_mark}
                             </span>
                           </div>
-                        </div>
+                          {!result.allSubjectsPassed && (
+                            <p className="text-xs text-destructive">
+                              {result.failedSubjects.length} subject(s) below pass mark
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openScoreEntry(test);
+                          }}
+                        >
+                          <Edit2 className="h-3 w-3 mr-1" />
+                          Enter Scores
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Reports View - Individual Test Details */}
+          {activeView === 'reports' && (
+            <div className="space-y-6">
+              {/* Test Selector */}
+              <Card className="card-gradient border-0 shadow-elevated">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Select Test Report</CardTitle>
+                  <CardDescription>Choose a test to view its detailed report</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {testSeriesList.map((test) => {
+                      const result = calculateTestResult(test);
+                      return (
+                        <Button
+                          key={test.id}
+                          variant={selectedTest?.id === test.id ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setSelectedTest(test)}
+                          className={`gap-2 ${selectedTest?.id === test.id ? 'hero-gradient text-white' : ''}`}
+                        >
+                          {test.name}
+                          {result.hasScores && (
+                            result.passed ? (
+                              <CheckCircle className="h-3 w-3 text-green-400" />
+                            ) : (
+                              <XCircle className="h-3 w-3" />
+                            )
+                          )}
+                        </Button>
                       );
                     })}
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
-                {/* Aggregate Summary */}
-                <div className="p-4 bg-muted/50 rounded-xl">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">Aggregate Score</span>
-                    <div className="text-right">
-                      <p className={`text-xl font-bold ${calculateTestResult(selectedTest).passed ? 'text-green-500' : 'text-destructive'}`}>
-                        {calculateTestResult(selectedTest).totalScore}/{selectedTest.aggregate_max_marks}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Pass Mark: {selectedTest.aggregate_pass_mark}
-                      </p>
+              {/* Selected Test Report */}
+              {selectedTest ? (
+                <Card className="card-gradient border-0 shadow-elevated">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl flex items-center gap-3">
+                          <FileText className="h-5 w-5 text-primary" />
+                          {selectedTest.name} - Test Report
+                        </CardTitle>
+                        <CardDescription>
+                          {formatDateRange(selectedTest.start_date, selectedTest.end_date)}
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openScoreEntry(selectedTest)}
+                        >
+                          <Edit2 className="h-4 w-4 mr-1" />
+                          Edit Scores
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => deleteTestSeries(selectedTest.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Overall Result Badge */}
+                    <div className="flex items-center justify-center p-4 bg-muted/30 rounded-xl">
+                      {calculateTestResult(selectedTest).hasScores ? (
+                        <div className="text-center">
+                          <Badge 
+                            variant={calculateTestResult(selectedTest).passed ? "default" : "destructive"}
+                            className={`text-lg px-4 py-2 ${calculateTestResult(selectedTest).passed ? "bg-green-500" : ""}`}
+                          >
+                            {calculateTestResult(selectedTest).passed ? (
+                              <><CheckCircle className="h-5 w-5 mr-2" /> PASSED</>
+                            ) : (
+                              <><XCircle className="h-5 w-5 mr-2" /> FAILED</>
+                            )}
+                          </Badge>
+                          {!calculateTestResult(selectedTest).passed && (
+                            <p className="text-sm text-muted-foreground mt-2">
+                              {!calculateTestResult(selectedTest).aggregatePassed && "Aggregate score below pass mark. "}
+                              {!calculateTestResult(selectedTest).allSubjectsPassed && `${calculateTestResult(selectedTest).failedSubjects.length} subject(s) below individual pass mark.`}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <Badge variant="outline" className="text-lg px-4 py-2">
+                            Scores Pending
+                          </Badge>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Enter scores to see the result
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Subject-wise Breakdown */}
+                    <div>
+                      <h4 className="font-semibold mb-4">Subject-wise Performance</h4>
+                      <div className="space-y-3">
+                        {selectedTest.scores.map(score => {
+                          const passed = score.score_obtained >= score.pass_mark;
+                          const percentage = score.max_marks > 0 ? (score.score_obtained / score.max_marks) * 100 : 0;
+                          return (
+                            <div key={score.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                {score.score_obtained > 0 ? (
+                                  passed ? (
+                                    <CheckCircle className="h-5 w-5 text-green-500" />
+                                  ) : (
+                                    <XCircle className="h-5 w-5 text-destructive" />
+                                  )
+                                ) : (
+                                  <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
+                                )}
+                                <span className="font-medium">{score.subject_name}</span>
+                              </div>
+                              <div className="flex items-center gap-4 text-sm">
+                                <span className="text-muted-foreground">
+                                  Pass: {score.pass_mark} / Max: {score.max_marks}
+                                </span>
+                                <span className={`font-semibold ${score.score_obtained > 0 ? (passed ? 'text-green-500' : 'text-destructive') : 'text-muted-foreground'}`}>
+                                  {score.score_obtained}/{score.max_marks} ({percentage.toFixed(1)}%)
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Aggregate Summary */}
+                    <div className="p-4 bg-muted/50 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold">Aggregate Score</span>
+                        <div className="text-right">
+                          <p className={`text-xl font-bold ${calculateTestResult(selectedTest).hasScores ? (calculateTestResult(selectedTest).passed ? 'text-green-500' : 'text-destructive') : 'text-muted-foreground'}`}>
+                            {calculateTestResult(selectedTest).totalScore}/{selectedTest.aggregate_max_marks}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Pass Mark: {selectedTest.aggregate_pass_mark}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="card-gradient border-0 shadow-elevated">
+                  <CardContent className="py-12 text-center">
+                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Select a Test</h3>
+                    <p className="text-muted-foreground">Choose a test from above to view its detailed report</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
 
-          {/* Comparison Analysis */}
-          {getComparisonData().length > 1 && (
-            <Card className="card-gradient border-0 shadow-elevated">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  <CardTitle>Performance Trend</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Overall Score Trend */}
-                <div>
-                  <h4 className="font-semibold mb-4">Overall Score Comparison</h4>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={getComparisonData()}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis dataKey="name" className="text-xs" />
-                        <YAxis className="text-xs" />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'hsl(var(--background))', 
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px'
-                          }}
-                        />
-                        <Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Score" />
-                        <Bar dataKey="passmark" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} name="Pass Mark" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+          {/* Analysis View - Comparison Charts */}
+          {activeView === 'analysis' && (
+            <div className="space-y-6">
+              {getComparisonData().length > 1 ? (
+                <>
+                  {/* Overall Score Comparison */}
+                  <Card className="card-gradient border-0 shadow-elevated">
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        <div>
+                          <CardTitle>Score Comparison</CardTitle>
+                          <CardDescription>Compare your performance across all tests</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-72">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={getComparisonData()}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                            <XAxis dataKey="name" className="text-xs" />
+                            <YAxis className="text-xs" />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: 'hsl(var(--background))', 
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px'
+                              }}
+                            />
+                            <Legend />
+                            <Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Your Score" />
+                            <Bar dataKey="passmark" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} name="Pass Mark" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                {/* Subject-wise Trend */}
-                {getSubjectWiseComparison().length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-4">Subject-wise Trend (%)</h4>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={getSubjectWiseComparison()}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                          <XAxis dataKey="name" className="text-xs" />
-                          <YAxis domain={[0, 100]} className="text-xs" />
-                          <Tooltip 
-                            contentStyle={{ 
-                              backgroundColor: 'hsl(var(--background))', 
-                              border: '1px solid hsl(var(--border))',
-                              borderRadius: '8px'
-                            }}
-                          />
-                          <Legend />
-                          {testSeriesList
-                            .filter(t => calculateTestResult(t).hasScores)
-                            .slice(0, 5)
-                            .map((test, index) => (
-                              <Line 
-                                key={test.id}
-                                type="monotone"
-                                dataKey={test.name}
-                                stroke={COLORS[index % COLORS.length]}
-                                strokeWidth={2}
-                                dot={{ r: 4 }}
+                  {/* Subject-wise Trend */}
+                  {getSubjectWiseComparison().length > 0 && (
+                    <Card className="card-gradient border-0 shadow-elevated">
+                      <CardHeader>
+                        <div className="flex items-center gap-3">
+                          <LineChartIcon className="h-5 w-5 text-primary" />
+                          <div>
+                            <CardTitle>Subject-wise Progress</CardTitle>
+                            <CardDescription>Track improvement in each subject over time</CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-72">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={getSubjectWiseComparison()}>
+                              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                              <XAxis dataKey="name" className="text-xs" />
+                              <YAxis domain={[0, 100]} className="text-xs" unit="%" />
+                              <Tooltip 
+                                contentStyle={{ 
+                                  backgroundColor: 'hsl(var(--background))', 
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '8px'
+                                }}
+                                formatter={(value: any) => [`${value}%`, '']}
                               />
-                            ))}
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                              <Legend />
+                              {testSeriesList
+                                .filter(t => calculateTestResult(t).hasScores)
+                                .slice(0, 5)
+                                .map((test, index) => (
+                                  <Line 
+                                    key={test.id}
+                                    type="monotone"
+                                    dataKey={test.name}
+                                    stroke={COLORS[index % COLORS.length]}
+                                    strokeWidth={2}
+                                    dot={{ r: 4 }}
+                                  />
+                                ))}
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Summary Stats */}
+                  <Card className="card-gradient border-0 shadow-elevated">
+                    <CardHeader>
+                      <CardTitle>Performance Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="p-4 bg-muted/30 rounded-xl text-center">
+                          <p className="text-2xl font-bold text-primary">
+                            {testSeriesList.filter(t => calculateTestResult(t).hasScores).length}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Tests Completed</p>
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-xl text-center">
+                          <p className="text-2xl font-bold text-green-500">
+                            {testSeriesList.filter(t => calculateTestResult(t).passed).length}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Tests Passed</p>
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-xl text-center">
+                          <p className="text-2xl font-bold text-destructive">
+                            {testSeriesList.filter(t => calculateTestResult(t).hasScores && !calculateTestResult(t).passed).length}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Tests Failed</p>
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-xl text-center">
+                          <p className="text-2xl font-bold text-primary">
+                            {testSeriesList.filter(t => calculateTestResult(t).hasScores).length > 0 
+                              ? Math.round(
+                                  (testSeriesList.filter(t => calculateTestResult(t).passed).length / 
+                                   testSeriesList.filter(t => calculateTestResult(t).hasScores).length) * 100
+                                )
+                              : 0}%
+                          </p>
+                          <p className="text-sm text-muted-foreground">Pass Rate</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              ) : (
+                <Card className="card-gradient border-0 shadow-elevated">
+                  <CardContent className="py-12 text-center">
+                    <LineChartIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Not enough data</h3>
+                    <p className="text-muted-foreground">Complete at least 2 tests with scores to see analysis and trends</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
         </>
       )}
