@@ -162,9 +162,10 @@ export type Database = {
           aggregate_pass_mark: number
           course_id: string
           created_at: string
+          end_date: string | null
           id: string
           name: string
-          test_date: string | null
+          start_date: string | null
           updated_at: string
         }
         Insert: {
@@ -172,9 +173,10 @@ export type Database = {
           aggregate_pass_mark: number
           course_id: string
           created_at?: string
+          end_date?: string | null
           id?: string
           name: string
-          test_date?: string | null
+          start_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -182,9 +184,10 @@ export type Database = {
           aggregate_pass_mark?: number
           course_id?: string
           created_at?: string
+          end_date?: string | null
           id?: string
           name?: string
-          test_date?: string | null
+          start_date?: string | null
           updated_at?: string
         }
         Relationships: [
