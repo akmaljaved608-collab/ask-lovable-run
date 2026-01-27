@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { BookOpen, GraduationCap, Target, TrendingUp, Clock, Award, Plus, ChevronRight, LogOut, User, Settings, FileText, BarChart3, Edit, Copy } from "lucide-react";
+import { BookOpen, GraduationCap, Target, TrendingUp, Clock, Award, Plus, ChevronRight, LogOut, User, Settings, FileText, BarChart3, Edit, Copy, ClipboardList } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 import { EditCourseDialog } from "@/components/EditCourseDialog";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { ProgressCalendar } from "@/components/ProgressCalendar";
+import { TestSeriesSection } from "@/components/TestSeriesSection";
 
 interface Subject {
   id: string;
@@ -617,6 +618,7 @@ const CourseTracker: React.FC = () => {
             { key: 'courses', icon: BookOpen, label: 'Courses' },
             { key: 'subjects', icon: Target, label: 'Subjects' },
             { key: 'syllabus', icon: Clock, label: 'Syllabus' },
+            { key: 'tests', icon: ClipboardList, label: 'Tests' },
             { key: 'progress', icon: TrendingUp, label: 'Analytics' }
           ].map(({ key, icon: Icon, label }) => (
             <Button
@@ -938,6 +940,46 @@ const CourseTracker: React.FC = () => {
                 </Card>
               )
             ))}
+          </div>
+        )}
+
+        {/* Tests Tab */}
+        {activeTab === 'tests' && (
+          <div className="space-y-6 animate-fade-in">
+            {selectedCourse ? (
+              <TestSeriesSection 
+                courseId={selectedCourse}
+                courseName={courses.find(c => c.id === selectedCourse)?.name || ''}
+                subjects={courses.find(c => c.id === selectedCourse)?.subjects.map(s => ({
+                  id: s.id,
+                  name: s.name
+                })) || []}
+              />
+            ) : (
+              <Card className="card-gradient border-0 shadow-elevated">
+                <CardContent className="py-12 text-center">
+                  <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Select a Course</h3>
+                  <p className="text-muted-foreground mb-6">Choose a course from below to manage its test series</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+                    {courses.map(course => (
+                      <Card 
+                        key={course.id}
+                        className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105"
+                        onClick={() => setSelectedCourse(course.id)}
+                      >
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">{course.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">{course.subjects.length} subjects</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 

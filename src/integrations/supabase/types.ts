@@ -156,6 +156,95 @@ export type Database = {
           },
         ]
       }
+      test_series: {
+        Row: {
+          aggregate_max_marks: number
+          aggregate_pass_mark: number
+          course_id: string
+          created_at: string
+          id: string
+          name: string
+          test_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          aggregate_max_marks: number
+          aggregate_pass_mark: number
+          course_id: string
+          created_at?: string
+          id?: string
+          name: string
+          test_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aggregate_max_marks?: number
+          aggregate_pass_mark?: number
+          course_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          test_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_series_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_series_scores: {
+        Row: {
+          created_at: string
+          id: string
+          max_marks: number
+          pass_mark: number
+          score_obtained: number
+          subject_id: string
+          test_series_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_marks: number
+          pass_mark: number
+          score_obtained: number
+          subject_id: string
+          test_series_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_marks?: number
+          pass_mark?: number
+          score_obtained?: number
+          subject_id?: string
+          test_series_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_series_scores_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_series_scores_test_series_id_fkey"
+            columns: ["test_series_id"]
+            isOneToOne: false
+            referencedRelation: "test_series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
