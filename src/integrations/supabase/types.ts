@@ -203,6 +203,7 @@ export type Database = {
       test_series_scores: {
         Row: {
           created_at: string
+          date_taken: string | null
           id: string
           max_marks: number
           pass_mark: number
@@ -213,6 +214,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          date_taken?: string | null
           id?: string
           max_marks: number
           pass_mark: number
@@ -223,6 +225,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          date_taken?: string | null
           id?: string
           max_marks?: number
           pass_mark?: number

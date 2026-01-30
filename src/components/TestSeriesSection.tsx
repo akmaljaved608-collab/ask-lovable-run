@@ -12,7 +12,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Plus, Trophy, XCircle, CheckCircle, TrendingUp, BarChart3, Trash2, CalendarIcon, Edit2, FileText, LineChart as LineChartIcon } from "lucide-react";
+import { Plus, Trophy, XCircle, CheckCircle, TrendingUp, BarChart3, Trash2, CalendarIcon, Edit2, FileText, LineChart as LineChartIcon, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 
 interface Subject {
@@ -27,6 +27,7 @@ interface TestSeriesScore {
   pass_mark: number;
   max_marks: number;
   score_obtained: number;
+  date_taken: string | null;
 }
 
 interface TestSeries {
@@ -52,6 +53,7 @@ interface SubjectScoreInput {
   pass_mark: string;
   max_marks: string;
   score_obtained: string;
+  date_taken: Date | undefined;
 }
 
 export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, courseName, subjects }) => {
@@ -87,7 +89,8 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
         subject_name: s.name,
         pass_mark: "",
         max_marks: "",
-        score_obtained: "0"
+        score_obtained: "0",
+        date_taken: undefined
       })));
     }
   }, [createDialogOpen, subjects]);
@@ -103,7 +106,8 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
           subject_name: s.name,
           pass_mark: existing?.pass_mark?.toString() || "",
           max_marks: existing?.max_marks?.toString() || "",
-          score_obtained: existing?.score_obtained?.toString() || ""
+          score_obtained: existing?.score_obtained?.toString() || "",
+          date_taken: existing?.date_taken ? new Date(existing.date_taken) : undefined
         };
       }));
     }
@@ -145,7 +149,8 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
               subject_name: subject?.name || 'Unknown Subject',
               pass_mark: score.pass_mark,
               max_marks: score.max_marks,
-              score_obtained: score.score_obtained
+              score_obtained: score.score_obtained,
+              date_taken: (score as any).date_taken || null
             };
           });
 
@@ -268,6 +273,14 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
         });
         return;
       }
+      if (!score.date_taken) {
+        toast({
+          title: "Validation error",
+          description: `Please select a date for ${score.subject_name}`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     try {
@@ -280,7 +293,10 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
         if (existingScore) {
           const { error } = await supabase
             .from('test_series_scores')
-            .update({ score_obtained: parseInt(score.score_obtained) })
+            .update({ 
+              score_obtained: parseInt(score.score_obtained),
+              date_taken: score.date_taken ? format(score.date_taken, 'yyyy-MM-dd') : null
+            })
             .eq('id', existingScore.id);
           
           if (error) throw error;
@@ -356,6 +372,12 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
     ));
   };
 
+  const updateSubjectDate = (subjectId: string, date: Date | undefined) => {
+    setSubjectScores(prev => prev.map(s => 
+      s.subject_id === subjectId ? { ...s, date_taken: date } : s
+    ));
+  };
+
   const openScoreEntry = (test: TestSeries) => {
     setEditingScoresTest(test);
     setScoresDialogOpen(true);
@@ -417,6 +439,203 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
     }
     if (start) return `From ${format(new Date(start), 'MMM d, yyyy')}`;
     return `Until ${format(new Date(end!), 'MMM d, yyyy')}`;
+  };
+
+  const generateTestReportPDF = (test: TestSeries) => {
+    const result = calculateTestResult(test);
+    
+    const reportContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Test Report - ${test.name}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .result-badge { display: inline-block; padding: 10px 20px; border-radius: 8px; font-size: 18px; font-weight: bold; }
+          .passed { background: #d4edda; color: #155724; }
+          .failed { background: #f8d7da; color: #721c24; }
+          .pending { background: #fff3cd; color: #856404; }
+          .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
+          .stat-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; }
+          .section { margin-top: 25px; }
+          .section h3 { border-bottom: 2px solid #007bff; padding-bottom: 8px; }
+          .subject-row { display: flex; justify-content: space-between; padding: 12px; margin: 8px 0; border-radius: 6px; }
+          .subject-pass { background: #d4edda; }
+          .subject-fail { background: #f8d7da; }
+          .subject-pending { background: #f8f9fa; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📝 Test Report: ${test.name}</h1>
+          <p>Course: ${courseName}</p>
+          <p>Date Range: ${formatDateRange(test.start_date, test.end_date)}</p>
+          <p>Generated on ${format(new Date(), "MMMM dd, yyyy")}</p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          ${result.hasScores 
+            ? `<span class="result-badge ${result.passed ? 'passed' : 'failed'}">
+                ${result.passed ? '✅ PASSED' : '❌ FAILED'}
+              </span>`
+            : '<span class="result-badge pending">⏳ PENDING</span>'
+          }
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">
+            <h4>Total Score</h4>
+            <p style="font-size: 24px; color: ${result.passed ? '#28a745' : '#dc3545'};">
+              ${result.totalScore}/${test.aggregate_max_marks}
+            </p>
+          </div>
+          <div class="stat-card">
+            <h4>Pass Mark</h4>
+            <p style="font-size: 24px; color: #007bff;">${test.aggregate_pass_mark}</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>📊 Subject-wise Performance</h3>
+          ${test.scores.map(score => {
+            const passed = score.score_obtained >= score.pass_mark;
+            const percentage = score.max_marks > 0 ? ((score.score_obtained / score.max_marks) * 100).toFixed(1) : 0;
+            return `
+              <div class="subject-row ${score.score_obtained > 0 ? (passed ? 'subject-pass' : 'subject-fail') : 'subject-pending'}">
+                <div>
+                  <strong>${score.subject_name}</strong>
+                  ${score.date_taken ? `<br/><small>Date: ${format(new Date(score.date_taken), 'MMM d, yyyy')}</small>` : ''}
+                </div>
+                <div style="text-align: right;">
+                  <strong>${score.score_obtained}/${score.max_marks}</strong> (${percentage}%)
+                  <br/><small>Pass: ${score.pass_mark}</small>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        ${!result.passed && result.hasScores ? `
+          <div class="section">
+            <h3>⚠️ Areas for Improvement</h3>
+            ${!result.aggregatePassed ? '<p>• Aggregate score is below the pass mark.</p>' : ''}
+            ${!result.allSubjectsPassed ? `<p>• The following subjects are below their individual pass marks:</p>
+              <ul>
+                ${result.failedSubjects.map(s => `<li>${s.subject_name} (${s.score_obtained}/${s.max_marks}, needed ${s.pass_mark})</li>`).join('')}
+              </ul>
+            ` : ''}
+          </div>
+        ` : ''}
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([reportContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `test-report-${test.name.replace(/\s+/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const generateCombinedReportPDF = () => {
+    const testsWithScores = testSeriesList.filter(t => calculateTestResult(t).hasScores);
+    const passedTests = testsWithScores.filter(t => calculateTestResult(t).passed);
+    const passRate = testsWithScores.length > 0 ? Math.round((passedTests.length / testsWithScores.length) * 100) : 0;
+
+    const reportContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Combined Test Report - ${courseName}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+          .stat-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; }
+          .section { margin-top: 25px; page-break-inside: avoid; }
+          .section h3 { border-bottom: 2px solid #007bff; padding-bottom: 8px; }
+          .test-card { border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 8px; page-break-inside: avoid; }
+          .test-card.passed { border-left: 4px solid #28a745; }
+          .test-card.failed { border-left: 4px solid #dc3545; }
+          .subject-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+          .subject-row:last-child { border-bottom: none; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📚 Combined Test Report</h1>
+          <p>Course: ${courseName}</p>
+          <p>Generated on ${format(new Date(), "MMMM dd, yyyy")}</p>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">
+            <h4>Total Tests</h4>
+            <p style="font-size: 24px; color: #007bff;">${testsWithScores.length}</p>
+          </div>
+          <div class="stat-card">
+            <h4>Passed</h4>
+            <p style="font-size: 24px; color: #28a745;">${passedTests.length}</p>
+          </div>
+          <div class="stat-card">
+            <h4>Failed</h4>
+            <p style="font-size: 24px; color: #dc3545;">${testsWithScores.length - passedTests.length}</p>
+          </div>
+          <div class="stat-card">
+            <h4>Pass Rate</h4>
+            <p style="font-size: 24px; color: #007bff;">${passRate}%</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>📝 Test Details</h3>
+          ${testSeriesList.map(test => {
+            const result = calculateTestResult(test);
+            return `
+              <div class="test-card ${result.hasScores ? (result.passed ? 'passed' : 'failed') : ''}">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <div>
+                    <h4 style="margin: 0;">${test.name}</h4>
+                    <small>${formatDateRange(test.start_date, test.end_date)}</small>
+                  </div>
+                  <div style="text-align: right;">
+                    <strong style="color: ${result.passed ? '#28a745' : '#dc3545'};">
+                      ${result.hasScores ? `${result.totalScore}/${test.aggregate_max_marks}` : 'Pending'}
+                    </strong>
+                    <br/>
+                    <span style="color: ${result.passed ? '#28a745' : '#dc3545'};">
+                      ${result.hasScores ? (result.passed ? '✅ Passed' : '❌ Failed') : '⏳ Pending'}
+                    </span>
+                  </div>
+                </div>
+                ${test.scores.map(score => `
+                  <div class="subject-row">
+                    <span>${score.subject_name} ${score.date_taken ? `(${format(new Date(score.date_taken), 'MMM d')})` : ''}</span>
+                    <span>${score.score_obtained}/${score.max_marks}</span>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([reportContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `combined-test-report-${courseName.replace(/\s+/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--destructive))', '#8B5CF6', '#EC4899'];
@@ -611,31 +830,62 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
       {/* Enter Scores Dialog */}
       <Dialog open={scoresDialogOpen} onOpenChange={setScoresDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Enter Scores - {editingScoresTest?.name}</DialogTitle>
             <DialogDescription>
-              Enter the marks obtained for each subject
+              Enter the marks obtained and date for each subject
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] pr-4">
             <div className="space-y-4">
               {subjectScores.map((score) => (
-                <div key={score.subject_id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                  <div>
-                    <p className="font-medium">{score.subject_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Max: {score.max_marks} | Pass: {score.pass_mark}
-                    </p>
-                  </div>
-                  <Input
-                    type="number"
-                    value={score.score_obtained}
-                    onChange={(e) => updateSubjectScore(score.subject_id, e.target.value)}
-                    placeholder="Score"
-                    className="w-24 h-9 rounded-lg text-center"
-                  />
-                </div>
+                <Card key={score.subject_id} className="bg-muted/30">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{score.subject_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Max: {score.max_marks} | Pass: {score.pass_mark}
+                        </p>
+                      </div>
+                      <Input
+                        type="number"
+                        value={score.score_obtained}
+                        onChange={(e) => updateSubjectScore(score.subject_id, e.target.value)}
+                        placeholder="Score"
+                        className="w-24 h-9 rounded-lg text-center"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground">Date Taken:</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "justify-start text-left font-normal rounded-lg flex-1",
+                              !score.date_taken && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            {score.date_taken ? format(score.date_taken, "PPP") : "Select date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={score.date_taken}
+                            onSelect={(date) => updateSubjectDate(score.subject_id, date)}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </ScrollArea>
@@ -784,8 +1034,21 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
               {/* Test Selector */}
               <Card className="card-gradient border-0 shadow-elevated">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Select Test Report</CardTitle>
-                  <CardDescription>Choose a test to view its detailed report</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">Select Test Report</CardTitle>
+                      <CardDescription>Choose a test to view its detailed report</CardDescription>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={generateCombinedReportPDF}
+                      disabled={testSeriesList.length === 0}
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Export All
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
@@ -828,7 +1091,15 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                           {formatDateRange(selectedTest.start_date, selectedTest.end_date)}
                         </CardDescription>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => generateTestReportPDF(selectedTest)}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Export PDF
+                        </Button>
                         <Button 
                           variant="outline" 
                           size="sm"
