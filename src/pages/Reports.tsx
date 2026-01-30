@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, TrendingUp, Target, Clock, Download, BarChart3 } from "lucide-react";
+import { Calendar, TrendingUp, Target, Clock, Download, BarChart3, ClipboardCheck } from "lucide-react";
 import { format, startOfWeek, startOfMonth, subWeeks, subMonths, startOfDay, subDays, isSameDay } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { getAchievementsForExport } from "@/components/StreakAchievements";
@@ -17,6 +17,7 @@ interface ProgressData {
   date: string;
   completed: number;
   total: number;
+  testsTaken?: number;
 }
 
 interface CourseProgress {
@@ -26,11 +27,26 @@ interface CourseProgress {
   completion_rate: number;
 }
 
+interface TestSeriesStats {
+  totalTests: number;
+  testsPassed: number;
+  testsFailed: number;
+  averageScore: number;
+  subjectTestDates: { date: string; courseName: string; subjectName: string; score: number; passed: boolean }[];
+}
+
 export default function Reports() {
   const { user } = useAuth();
   const [period, setPeriod] = useState("week");
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
+  const [testStats, setTestStats] = useState<TestSeriesStats>({
+    totalTests: 0,
+    testsPassed: 0,
+    testsFailed: 0,
+    averageScore: 0,
+    subjectTestDates: []
+  });
   const [stats, setStats] = useState({
     totalCompleted: 0,
     averageDaily: 0,
@@ -91,8 +107,11 @@ export default function Reports() {
       const { data: courses } = await supabase
         .from("courses")
         .select(`
+          id,
           name,
           subjects (
+            id,
+            name,
             syllabus_items (
               completed,
               date_completed
@@ -101,21 +120,102 @@ export default function Reports() {
         `)
         .eq("user_id", user?.id);
 
+      // Fetch test series data for test progress
+      const courseIds = courses?.map(c => c.id) || [];
+      let testSeriesData: any[] = [];
+      let testScoresData: any[] = [];
+      
+      if (courseIds.length > 0) {
+        const { data: testSeries } = await supabase
+          .from("test_series")
+          .select("*")
+          .in("course_id", courseIds);
+        
+        testSeriesData = testSeries || [];
+        
+        if (testSeriesData.length > 0) {
+          const testIds = testSeriesData.map(t => t.id);
+          const { data: scores } = await supabase
+            .from("test_series_scores")
+            .select("*")
+            .in("test_series_id", testIds);
+          
+          testScoresData = scores || [];
+        }
+      }
+
+      // Process test series stats
+      const subjectTestDates: { date: string; courseName: string; subjectName: string; score: number; passed: boolean }[] = [];
+      let totalTests = 0;
+      let testsPassed = 0;
+      let testsFailed = 0;
+      let totalPercentage = 0;
+
+      testSeriesData.forEach(test => {
+        const scores = testScoresData.filter(s => s.test_series_id === test.id);
+        const hasScores = scores.some(s => s.score_obtained > 0);
+        
+        if (hasScores) {
+          totalTests++;
+          const totalScore = scores.reduce((sum, s) => sum + s.score_obtained, 0);
+          const aggregatePassed = totalScore >= test.aggregate_pass_mark;
+          const allSubjectsPassed = scores.every(s => s.score_obtained >= s.pass_mark);
+          const passed = aggregatePassed && allSubjectsPassed;
+          
+          if (passed) testsPassed++;
+          else testsFailed++;
+          
+          totalPercentage += (totalScore / test.aggregate_max_marks) * 100;
+          
+          // Add subject test dates
+          const course = courses?.find(c => c.id === test.course_id);
+          scores.forEach(score => {
+            if (score.date_taken) {
+              const subject = course?.subjects.find((s: any) => s.id === score.subject_id);
+              subjectTestDates.push({
+                date: score.date_taken,
+                courseName: course?.name || 'Unknown Course',
+                subjectName: subject?.name || 'Unknown Subject',
+                score: score.score_obtained,
+                passed: score.score_obtained >= score.pass_mark
+              });
+            }
+          });
+        }
+      });
+
+      setTestStats({
+        totalTests,
+        testsPassed,
+        testsFailed,
+        averageScore: totalTests > 0 ? Math.round(totalPercentage / totalTests) : 0,
+        subjectTestDates
+      });
+
       // Process progress data for charts
-      const progressMap = new Map<string, { completed: number; total: number }>();
+      const progressMap = new Map<string, { completed: number; total: number; testsTaken: number }>();
       
       // Initialize all dates in range
       for (let d = new Date(startDate); d <= endDate; d = new Date(d.getTime() + 24 * 60 * 60 * 1000)) {
         const dateKey = format(d, "yyyy-MM-dd");
-        progressMap.set(dateKey, { completed: 0, total: 0 });
+        progressMap.set(dateKey, { completed: 0, total: 0, testsTaken: 0 });
       }
 
       // Count completions by date
       completions?.forEach(item => {
         if (item.date_completed) {
           const dateKey = format(new Date(item.date_completed), "yyyy-MM-dd");
-          const current = progressMap.get(dateKey) || { completed: 0, total: 0 };
+          const current = progressMap.get(dateKey) || { completed: 0, total: 0, testsTaken: 0 };
           progressMap.set(dateKey, { ...current, completed: current.completed + 1 });
+        }
+      });
+
+      // Count test dates
+      subjectTestDates.forEach(test => {
+        const dateKey = format(new Date(test.date), "yyyy-MM-dd");
+        const current = progressMap.get(dateKey);
+        if (current) {
+          progressMap.set(dateKey, { ...current, testsTaken: current.testsTaken + 1 });
         }
       });
 
@@ -123,7 +223,8 @@ export default function Reports() {
         .map(([date, data]) => ({
           date: format(new Date(date), period === "week" ? "MMM dd" : "MMM yyyy"),
           completed: data.completed,
-          total: data.total
+          total: data.total,
+          testsTaken: data.testsTaken
         }))
         .slice(-20); // Show last 20 data points
 
@@ -131,8 +232,8 @@ export default function Reports() {
 
       // Process course progress
       const courseProgressData = courses?.map(course => {
-        const allItems = course.subjects.flatMap(s => s.syllabus_items);
-        const completedItems = allItems.filter(item => item.completed);
+        const allItems = course.subjects.flatMap((s: any) => s.syllabus_items);
+        const completedItems = allItems.filter((item: any) => item.completed);
         
         return {
           course_name: course.name,
@@ -360,7 +461,7 @@ export default function Reports() {
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Completed</CardTitle>
@@ -404,12 +505,24 @@ export default function Reports() {
               <p className="text-xs text-muted-foreground">active courses</p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tests Passed</CardTitle>
+              <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{testStats.testsPassed}/{testStats.totalTests}</div>
+              <p className="text-xs text-muted-foreground">{testStats.averageScore}% avg score</p>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="progress" className="space-y-6">
           <TabsList>
             <TabsTrigger value="progress">Progress Trends</TabsTrigger>
             <TabsTrigger value="courses">Course Analysis</TabsTrigger>
+            <TabsTrigger value="tests">Test Progress</TabsTrigger>
           </TabsList>
 
           <TabsContent value="progress" className="space-y-6">
@@ -530,6 +643,84 @@ export default function Reports() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="tests" className="space-y-6">
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Test Series Performance</CardTitle>
+                  <CardDescription>
+                    Summary of your test performance across all courses
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-muted/30 rounded-xl text-center">
+                      <p className="text-2xl font-bold text-primary">{testStats.totalTests}</p>
+                      <p className="text-sm text-muted-foreground">Tests Taken</p>
+                    </div>
+                    <div className="p-4 bg-muted/30 rounded-xl text-center">
+                      <p className="text-2xl font-bold text-primary">{testStats.testsPassed}</p>
+                      <p className="text-sm text-muted-foreground">Tests Passed</p>
+                    </div>
+                    <div className="p-4 bg-muted/30 rounded-xl text-center">
+                      <p className="text-2xl font-bold text-destructive">{testStats.testsFailed}</p>
+                      <p className="text-sm text-muted-foreground">Tests Failed</p>
+                    </div>
+                    <div className="p-4 bg-muted/30 rounded-xl text-center">
+                      <p className="text-2xl font-bold text-primary">{testStats.averageScore}%</p>
+                      <p className="text-sm text-muted-foreground">Average Score</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Test Activity</CardTitle>
+                  <CardDescription>
+                    Subject tests taken with their dates and scores
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {testStats.subjectTestDates.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      No test data recorded yet. Complete tests and enter scores to see progress.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {testStats.subjectTestDates
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .slice(0, 20)
+                        .map((test, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              {test.passed ? (
+                                <div className="h-2 w-2 rounded-full bg-primary" />
+                              ) : (
+                                <div className="h-2 w-2 rounded-full bg-destructive" />
+                              )}
+                              <div>
+                                <p className="font-medium text-sm">{test.subjectName}</p>
+                                <p className="text-xs text-muted-foreground">{test.courseName}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className={`font-medium text-sm ${test.passed ? 'text-primary' : 'text-destructive'}`}>
+                                Score: {test.score}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(test.date), 'MMM d, yyyy')}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
