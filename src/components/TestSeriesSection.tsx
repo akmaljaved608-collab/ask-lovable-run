@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Plus, Trophy, XCircle, CheckCircle, TrendingUp, BarChart3, Trash2, CalendarIcon, Edit2, FileText, LineChart as LineChartIcon, Download } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 
 interface Subject {
@@ -72,6 +73,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
   const [aggregatePassMark, setAggregatePassMark] = useState("");
   const [aggregateMaxMarks, setAggregateMaxMarks] = useState("");
   const [subjectPassMarks, setSubjectPassMarks] = useState<SubjectScoreInput[]>([]);
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<Set<string>>(new Set());
   
   // Score entry state
   const [subjectScores, setSubjectScores] = useState<SubjectScoreInput[]>([]);
@@ -84,6 +86,8 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
   useEffect(() => {
     if (createDialogOpen && subjects.length > 0) {
+      const allIds = new Set(subjects.map(s => s.id));
+      setSelectedSubjectIds(allIds);
       setSubjectPassMarks(subjects.map(s => ({
         subject_id: s.id,
         subject_name: s.name,
@@ -97,21 +101,18 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
   useEffect(() => {
     if (editingScoresTest && scoresDialogOpen) {
-      // Initialize with existing scores or empty
+      // Only show subjects that are part of this test (have score entries)
       const existingScores = editingScoresTest.scores;
-      setSubjectScores(subjects.map(s => {
-        const existing = existingScores.find(sc => sc.subject_id === s.id);
-        return {
-          subject_id: s.id,
-          subject_name: s.name,
-          pass_mark: existing?.pass_mark?.toString() || "",
-          max_marks: existing?.max_marks?.toString() || "",
-          score_obtained: existing?.score_obtained?.toString() || "",
-          date_taken: existing?.date_taken ? new Date(existing.date_taken) : undefined
-        };
-      }));
+      setSubjectScores(existingScores.map(sc => ({
+        subject_id: sc.subject_id,
+        subject_name: sc.subject_name,
+        pass_mark: sc.pass_mark?.toString() || "",
+        max_marks: sc.max_marks?.toString() || "",
+        score_obtained: sc.score_obtained?.toString() || "",
+        date_taken: sc.date_taken ? new Date(sc.date_taken) : undefined
+      })));
     }
-  }, [editingScoresTest, scoresDialogOpen, subjects]);
+  }, [editingScoresTest, scoresDialogOpen]);
 
   const loadTestSeries = async () => {
     try {
@@ -188,8 +189,18 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
       return;
     }
 
-    // Validate pass marks and max marks for all subjects
-    for (const score of subjectPassMarks) {
+    if (selectedSubjectIds.size === 0) {
+      toast({
+        title: "Validation error",
+        description: "Please select at least one subject",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate pass marks and max marks for selected subjects
+    const selectedPassMarks = subjectPassMarks.filter(s => selectedSubjectIds.has(s.subject_id));
+    for (const score of selectedPassMarks) {
       if (!score.pass_mark || !score.max_marks) {
         toast({
           title: "Validation error",
@@ -228,13 +239,15 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
       if (testError) throw testError;
 
       // Create score entries with 0 scores initially (pass/max marks set)
-      const scoresInsert = subjectPassMarks.map(score => ({
-        test_series_id: testData.id,
-        subject_id: score.subject_id,
-        pass_mark: parseInt(score.pass_mark),
-        max_marks: parseInt(score.max_marks),
-        score_obtained: 0
-      }));
+      const scoresInsert = subjectPassMarks
+        .filter(score => selectedSubjectIds.has(score.subject_id))
+        .map(score => ({
+          test_series_id: testData.id,
+          subject_id: score.subject_id,
+          pass_mark: parseInt(score.pass_mark),
+          max_marks: parseInt(score.max_marks),
+          score_obtained: 0
+        }));
 
       const { error: scoresError } = await supabase
         .from('test_series_scores')
@@ -358,6 +371,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
     setAggregatePassMark("");
     setAggregateMaxMarks("");
     setSubjectPassMarks([]);
+    setSelectedSubjectIds(new Set());
   };
 
   const updateSubjectPassMark = (subjectId: string, field: 'pass_mark' | 'max_marks', value: string) => {
@@ -777,39 +791,100 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                   </CardContent>
                 </Card>
 
-                {/* Subject-wise Pass Marks */}
-                <div className="space-y-4">
-                  <Label className="text-base font-semibold">Subject-wise Passing Criteria</Label>
-                  {subjectPassMarks.map((score) => (
-                    <Card key={score.subject_id} className="bg-muted/30">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">{score.subject_name}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Pass Mark *</Label>
-                          <Input
-                            type="number"
-                            value={score.pass_mark}
-                            onChange={(e) => updateSubjectPassMark(score.subject_id, 'pass_mark', e.target.value)}
-                            placeholder="40"
-                            className="h-9 rounded-lg"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Max Marks *</Label>
-                          <Input
-                            type="number"
-                            value={score.max_marks}
-                            onChange={(e) => updateSubjectPassMark(score.subject_id, 'max_marks', e.target.value)}
-                            placeholder="100"
-                            className="h-9 rounded-lg"
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                {/* Subject Selection */}
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Select Subjects for this Test</Label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedSubjectIds(new Set(subjects.map(s => s.id)))}
+                      className="text-xs"
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedSubjectIds(new Set())}
+                      className="text-xs"
+                    >
+                      Deselect All
+                    </Button>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {selectedSubjectIds.size}/{subjects.length} selected
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {subjects.map((subject) => (
+                      <label
+                        key={subject.id}
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                          selectedSubjectIds.has(subject.id)
+                            ? "border-primary bg-primary/5"
+                            : "border-border bg-muted/20 opacity-60"
+                        )}
+                      >
+                        <Checkbox
+                          checked={selectedSubjectIds.has(subject.id)}
+                          onCheckedChange={(checked) => {
+                            setSelectedSubjectIds(prev => {
+                              const next = new Set(prev);
+                              if (checked) {
+                                next.add(subject.id);
+                              } else {
+                                next.delete(subject.id);
+                              }
+                              return next;
+                            });
+                          }}
+                        />
+                        <span className="text-sm font-medium">{subject.name}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Subject-wise Pass Marks (only selected) */}
+                {selectedSubjectIds.size > 0 && (
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Subject-wise Passing Criteria</Label>
+                    {subjectPassMarks
+                      .filter(score => selectedSubjectIds.has(score.subject_id))
+                      .map((score) => (
+                      <Card key={score.subject_id} className="bg-muted/30">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm">{score.subject_name}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Pass Mark *</Label>
+                            <Input
+                              type="number"
+                              value={score.pass_mark}
+                              onChange={(e) => updateSubjectPassMark(score.subject_id, 'pass_mark', e.target.value)}
+                              placeholder="40"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Max Marks *</Label>
+                            <Input
+                              type="number"
+                              value={score.max_marks}
+                              onChange={(e) => updateSubjectPassMark(score.subject_id, 'max_marks', e.target.value)}
+                              placeholder="100"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
             </ScrollArea>
             <DialogFooter>
