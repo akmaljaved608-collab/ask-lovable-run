@@ -374,6 +374,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
     setAggregatePassMark("");
     setAggregateMaxMarks("");
     setSubjectPassMarks([]);
+    setSelectedSubjectIds(new Set());
   };
 
   const updateSubjectPassMark = (subjectId: string, field: 'pass_mark' | 'max_marks', value: string) => {
