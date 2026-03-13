@@ -86,6 +86,8 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
   useEffect(() => {
     if (createDialogOpen && subjects.length > 0) {
+      const allIds = new Set(subjects.map(s => s.id));
+      setSelectedSubjectIds(allIds);
       setSubjectPassMarks(subjects.map(s => ({
         subject_id: s.id,
         subject_name: s.name,
