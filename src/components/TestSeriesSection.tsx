@@ -242,13 +242,15 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
       if (testError) throw testError;
 
       // Create score entries with 0 scores initially (pass/max marks set)
-      const scoresInsert = subjectPassMarks.map(score => ({
-        test_series_id: testData.id,
-        subject_id: score.subject_id,
-        pass_mark: parseInt(score.pass_mark),
-        max_marks: parseInt(score.max_marks),
-        score_obtained: 0
-      }));
+      const scoresInsert = subjectPassMarks
+        .filter(score => selectedSubjectIds.has(score.subject_id))
+        .map(score => ({
+          test_series_id: testData.id,
+          subject_id: score.subject_id,
+          pass_mark: parseInt(score.pass_mark),
+          max_marks: parseInt(score.max_marks),
+          score_obtained: 0
+        }));
 
       const { error: scoresError } = await supabase
         .from('test_series_scores')
