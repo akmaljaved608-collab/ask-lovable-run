@@ -885,7 +885,6 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                     ))}
                   </div>
                 )}
-                </div>
               </div>
             </ScrollArea>
             <DialogFooter>
