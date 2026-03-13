@@ -192,8 +192,18 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
       return;
     }
 
-    // Validate pass marks and max marks for all subjects
-    for (const score of subjectPassMarks) {
+    if (selectedSubjectIds.size === 0) {
+      toast({
+        title: "Validation error",
+        description: "Please select at least one subject",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate pass marks and max marks for selected subjects
+    const selectedPassMarks = subjectPassMarks.filter(s => selectedSubjectIds.has(s.subject_id));
+    for (const score of selectedPassMarks) {
       if (!score.pass_mark || !score.max_marks) {
         toast({
           title: "Validation error",
