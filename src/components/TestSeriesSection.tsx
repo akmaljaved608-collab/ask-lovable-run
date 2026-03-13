@@ -101,21 +101,18 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
   useEffect(() => {
     if (editingScoresTest && scoresDialogOpen) {
-      // Initialize with existing scores or empty
+      // Only show subjects that are part of this test (have score entries)
       const existingScores = editingScoresTest.scores;
-      setSubjectScores(subjects.map(s => {
-        const existing = existingScores.find(sc => sc.subject_id === s.id);
-        return {
-          subject_id: s.id,
-          subject_name: s.name,
-          pass_mark: existing?.pass_mark?.toString() || "",
-          max_marks: existing?.max_marks?.toString() || "",
-          score_obtained: existing?.score_obtained?.toString() || "",
-          date_taken: existing?.date_taken ? new Date(existing.date_taken) : undefined
-        };
-      }));
+      setSubjectScores(existingScores.map(sc => ({
+        subject_id: sc.subject_id,
+        subject_name: sc.subject_name,
+        pass_mark: sc.pass_mark?.toString() || "",
+        max_marks: sc.max_marks?.toString() || "",
+        score_obtained: sc.score_obtained?.toString() || "",
+        date_taken: sc.date_taken ? new Date(sc.date_taken) : undefined
+      })));
     }
-  }, [editingScoresTest, scoresDialogOpen, subjects]);
+  }, [editingScoresTest, scoresDialogOpen]);
 
   const loadTestSeries = async () => {
     try {
