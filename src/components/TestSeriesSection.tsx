@@ -73,6 +73,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
   const [aggregatePassMark, setAggregatePassMark] = useState("");
   const [aggregateMaxMarks, setAggregateMaxMarks] = useState("");
   const [subjectPassMarks, setSubjectPassMarks] = useState<SubjectScoreInput[]>([]);
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<Set<string>>(new Set());
   
   // Score entry state
   const [subjectScores, setSubjectScores] = useState<SubjectScoreInput[]>([]);
