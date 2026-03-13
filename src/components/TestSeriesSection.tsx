@@ -791,38 +791,100 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                   </CardContent>
                 </Card>
 
-                {/* Subject-wise Pass Marks */}
-                <div className="space-y-4">
-                  <Label className="text-base font-semibold">Subject-wise Passing Criteria</Label>
-                  {subjectPassMarks.map((score) => (
-                    <Card key={score.subject_id} className="bg-muted/30">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">{score.subject_name}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Pass Mark *</Label>
-                          <Input
-                            type="number"
-                            value={score.pass_mark}
-                            onChange={(e) => updateSubjectPassMark(score.subject_id, 'pass_mark', e.target.value)}
-                            placeholder="40"
-                            className="h-9 rounded-lg"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Max Marks *</Label>
-                          <Input
-                            type="number"
-                            value={score.max_marks}
-                            onChange={(e) => updateSubjectPassMark(score.subject_id, 'max_marks', e.target.value)}
-                            placeholder="100"
-                            className="h-9 rounded-lg"
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                {/* Subject Selection */}
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Select Subjects for this Test</Label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedSubjectIds(new Set(subjects.map(s => s.id)))}
+                      className="text-xs"
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedSubjectIds(new Set())}
+                      className="text-xs"
+                    >
+                      Deselect All
+                    </Button>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {selectedSubjectIds.size}/{subjects.length} selected
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {subjects.map((subject) => (
+                      <label
+                        key={subject.id}
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                          selectedSubjectIds.has(subject.id)
+                            ? "border-primary bg-primary/5"
+                            : "border-border bg-muted/20 opacity-60"
+                        )}
+                      >
+                        <Checkbox
+                          checked={selectedSubjectIds.has(subject.id)}
+                          onCheckedChange={(checked) => {
+                            setSelectedSubjectIds(prev => {
+                              const next = new Set(prev);
+                              if (checked) {
+                                next.add(subject.id);
+                              } else {
+                                next.delete(subject.id);
+                              }
+                              return next;
+                            });
+                          }}
+                        />
+                        <span className="text-sm font-medium">{subject.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Subject-wise Pass Marks (only selected) */}
+                {selectedSubjectIds.size > 0 && (
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Subject-wise Passing Criteria</Label>
+                    {subjectPassMarks
+                      .filter(score => selectedSubjectIds.has(score.subject_id))
+                      .map((score) => (
+                      <Card key={score.subject_id} className="bg-muted/30">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm">{score.subject_name}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Pass Mark *</Label>
+                            <Input
+                              type="number"
+                              value={score.pass_mark}
+                              onChange={(e) => updateSubjectPassMark(score.subject_id, 'pass_mark', e.target.value)}
+                              placeholder="40"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Max Marks *</Label>
+                            <Input
+                              type="number"
+                              value={score.max_marks}
+                              onChange={(e) => updateSubjectPassMark(score.subject_id, 'max_marks', e.target.value)}
+                              placeholder="100"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
                 </div>
               </div>
             </ScrollArea>
