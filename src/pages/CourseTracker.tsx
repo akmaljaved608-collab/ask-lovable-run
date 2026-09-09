@@ -505,23 +505,25 @@ const CourseTracker: React.FC = () => {
   const courseChartData = getCourseChartData();
   const completedItemsForCalendar = getCompletedItemsForCalendar();
 
-  // Modern color palette
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'];
+  // Chart palette — cool, light, in line with the design system
+  const COLORS = ['#1a6b7a', '#2f9c8b', '#7c6ede', '#4aa8c0', '#a7a0ea', '#3f8f76', '#6fc2cf', '#c2a83e'];
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Header with User Info */}
-        <header className="text-center mb-12 animate-fade-in">
-          <div className="flex justify-between items-start mb-6">
-            <div></div>
+        <header className="mb-10 animate-fade-in">
+          <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
             <div className="inline-flex items-center gap-3">
-              <div className="hero-gradient p-3 rounded-2xl shadow-glow">
-                <GraduationCap className="h-8 w-8 text-primary-foreground" />
+              <div className="hero-gradient p-2.5 rounded-2xl shadow-glow">
+                <GraduationCap className="h-6 w-6 text-primary-foreground" />
               </div>
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Course Tracker
-              </h1>
+              <div className="flex flex-col leading-none">
+                <span className="eyebrow">Study journal</span>
+                <h1 className="text-3xl md:text-4xl text-foreground">
+                  Course Tracker
+                </h1>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Button 
