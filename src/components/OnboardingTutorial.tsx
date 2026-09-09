@@ -94,7 +94,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
           <div className="flex items-center justify-between mb-2">
             <DialogTitle className="text-2xl flex items-center gap-3">
               <div className="hero-gradient p-2 rounded-xl">
-                <Icon className="h-6 w-6 text-white" />
+                <Icon className="h-6 w-6 text-primary-foreground" />
               </div>
               {step.title}
             </DialogTitle>
@@ -140,7 +140,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
                 Previous
               </Button>
             )}
-            <Button onClick={handleNext} className="hero-gradient text-white">
+            <Button onClick={handleNext} className="hero-gradient text-primary-foreground">
               {currentStep === tutorialSteps.length - 1 ? "Get Started" : "Next"}
               {currentStep < tutorialSteps.length - 1 && (
                 <ChevronRight className="h-4 w-4 ml-1" />

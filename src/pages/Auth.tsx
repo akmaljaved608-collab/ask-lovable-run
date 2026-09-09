@@ -133,7 +133,7 @@ const Auth = () => {
                   <Button 
                     type="submit" 
                     disabled={loading}
-                    className="w-full hero-gradient text-white h-12 rounded-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
+                    className="w-full hero-gradient text-primary-foreground h-12 rounded-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
                   >
                     {loading ? (
                       <div className="flex items-center gap-2">

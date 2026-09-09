@@ -678,7 +678,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
         {/* Create Dialog */}
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="hero-gradient text-white rounded-xl">
+            <Button className="hero-gradient text-primary-foreground rounded-xl">
               <Plus className="h-4 w-4 mr-2" />
               Add Test Series
             </Button>
@@ -894,7 +894,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
               <Button 
                 onClick={createTestSeries} 
                 disabled={loading}
-                className="hero-gradient text-white"
+                className="hero-gradient text-primary-foreground"
               >
                 {loading ? 'Creating...' : 'Create Test Series'}
               </Button>
@@ -971,7 +971,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
             <Button 
               onClick={saveScores} 
               disabled={loading}
-              className="hero-gradient text-white"
+              className="hero-gradient text-primary-foreground"
             >
               {loading ? 'Saving...' : 'Save Scores'}
             </Button>
@@ -986,7 +986,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
             variant={activeView === 'tests' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveView('tests')}
-            className={`gap-2 rounded-lg ${activeView === 'tests' ? 'hero-gradient text-white' : ''}`}
+            className={`gap-2 rounded-lg ${activeView === 'tests' ? 'hero-gradient text-primary-foreground' : ''}`}
           >
             <Trophy className="h-4 w-4" />
             Tests
@@ -995,7 +995,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
             variant={activeView === 'reports' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveView('reports')}
-            className={`gap-2 rounded-lg ${activeView === 'reports' ? 'hero-gradient text-white' : ''}`}
+            className={`gap-2 rounded-lg ${activeView === 'reports' ? 'hero-gradient text-primary-foreground' : ''}`}
           >
             <FileText className="h-4 w-4" />
             Reports
@@ -1004,7 +1004,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
             variant={activeView === 'analysis' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveView('analysis')}
-            className={`gap-2 rounded-lg ${activeView === 'analysis' ? 'hero-gradient text-white' : ''}`}
+            className={`gap-2 rounded-lg ${activeView === 'analysis' ? 'hero-gradient text-primary-foreground' : ''}`}
           >
             <LineChartIcon className="h-4 w-4" />
             Analysis
@@ -1135,7 +1135,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                           variant={selectedTest?.id === test.id ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setSelectedTest(test)}
-                          className={`gap-2 ${selectedTest?.id === test.id ? 'hero-gradient text-white' : ''}`}
+                          className={`gap-2 ${selectedTest?.id === test.id ? 'hero-gradient text-primary-foreground' : ''}`}
                         >
                           {test.name}
                           {result.hasScores && (

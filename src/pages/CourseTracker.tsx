@@ -517,7 +517,7 @@ const CourseTracker: React.FC = () => {
             <div></div>
             <div className="inline-flex items-center gap-3">
               <div className="hero-gradient p-3 rounded-2xl shadow-glow">
-                <GraduationCap className="h-8 w-8 text-white" />
+                <GraduationCap className="h-8 w-8 text-primary-foreground" />
               </div>
               <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Course Tracker
@@ -631,7 +631,7 @@ const CourseTracker: React.FC = () => {
               }}
               className={`flex-1 min-w-fit gap-2 h-12 rounded-xl transition-all duration-300 ${
                 activeTab === key 
-                  ? 'hero-gradient text-white shadow-glow scale-105' 
+                  ? 'hero-gradient text-primary-foreground shadow-glow scale-105' 
                   : 'hover:bg-accent/10 hover:scale-105'
               }`}
             >
@@ -683,7 +683,7 @@ const CourseTracker: React.FC = () => {
                 <Button 
                   onClick={createCourse} 
                   disabled={!newCourse.name.trim() || loading}
-                  className="w-full md:w-auto hero-gradient text-white h-12 px-8 rounded-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
+                  className="w-full md:w-auto hero-gradient text-primary-foreground h-12 px-8 rounded-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   {loading ? 'Creating...' : 'Create Course'}
@@ -819,7 +819,7 @@ const CourseTracker: React.FC = () => {
                 <Button 
                   onClick={createSubject} 
                   disabled={!newSubject.name.trim() || !selectedCourse || loading}
-                  className="hero-gradient text-white h-12 px-8 rounded-xl"
+                  className="hero-gradient text-primary-foreground h-12 px-8 rounded-xl"
                 >
                   {loading ? 'Creating...' : 'Create Subject'}
                 </Button>
@@ -898,7 +898,7 @@ const CourseTracker: React.FC = () => {
                 <Button 
                   onClick={processSyllabus} 
                   disabled={!syllabusText.trim() || !selectedCourse || !selectedSubject || loading}
-                  className="hero-gradient text-white h-12 px-8 rounded-xl"
+                  className="hero-gradient text-primary-foreground h-12 px-8 rounded-xl"
                 >
                   {loading ? 'Processing...' : 'Convert to Checklist'}
                 </Button>
