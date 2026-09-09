@@ -652,7 +652,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
     URL.revokeObjectURL(url);
   };
 
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--destructive))', '#8B5CF6', '#EC4899'];
+  const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--destructive))', 'hsl(var(--primary-glow))', 'hsl(var(--accent-light))'];
 
   if (subjects.length === 0) {
     return (

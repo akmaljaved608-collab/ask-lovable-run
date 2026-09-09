@@ -633,8 +633,8 @@ const CourseTracker: React.FC = () => {
               }}
               className={`flex-1 min-w-fit gap-2 h-12 rounded-xl transition-all duration-300 ${
                 activeTab === key 
-                  ? 'hero-gradient text-primary-foreground shadow-glow scale-105' 
-                  : 'hover:bg-accent/10 hover:scale-105'
+                  ? 'hero-gradient text-primary-foreground shadow-glow' 
+                  : 'hover:bg-background/80'
               }`}
             >
               <Icon className="h-4 w-4" />
