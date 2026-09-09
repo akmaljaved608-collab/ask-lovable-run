@@ -505,23 +505,25 @@ const CourseTracker: React.FC = () => {
   const courseChartData = getCourseChartData();
   const completedItemsForCalendar = getCompletedItemsForCalendar();
 
-  // Modern color palette
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'];
+  // Chart palette — cool, light, in line with the design system
+  const COLORS = ['#1a6b7a', '#2f9c8b', '#7c6ede', '#4aa8c0', '#a7a0ea', '#3f8f76', '#6fc2cf', '#c2a83e'];
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Header with User Info */}
-        <header className="text-center mb-12 animate-fade-in">
-          <div className="flex justify-between items-start mb-6">
-            <div></div>
+        <header className="mb-10 animate-fade-in">
+          <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
             <div className="inline-flex items-center gap-3">
-              <div className="hero-gradient p-3 rounded-2xl shadow-glow">
-                <GraduationCap className="h-8 w-8 text-white" />
+              <div className="hero-gradient p-2.5 rounded-2xl shadow-glow">
+                <GraduationCap className="h-6 w-6 text-primary-foreground" />
               </div>
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Course Tracker
-              </h1>
+              <div className="flex flex-col leading-none">
+                <span className="eyebrow">Study journal</span>
+                <h1 className="text-3xl md:text-4xl text-foreground">
+                  Course Tracker
+                </h1>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Button 
@@ -574,13 +576,13 @@ const CourseTracker: React.FC = () => {
               </DropdownMenu>
             </div>
           </div>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Transform your learning journey with intelligent progress tracking and comprehensive syllabus management
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
+            A quiet, considered record of everything you are learning — syllabus, streaks, tests and results in one place.
           </p>
         </header>
 
         {/* Progress Overview */}
-        <Card className="mb-8 card-gradient border-0 shadow-elevated animate-scale-in">
+        <Card className="mb-8 card-gradient border border-border/70 shadow-elevated animate-scale-in">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
               <div className="bg-secondary/10 p-2 rounded-xl">
@@ -631,8 +633,8 @@ const CourseTracker: React.FC = () => {
               }}
               className={`flex-1 min-w-fit gap-2 h-12 rounded-xl transition-all duration-300 ${
                 activeTab === key 
-                  ? 'hero-gradient text-white shadow-glow scale-105' 
-                  : 'hover:bg-accent/10 hover:scale-105'
+                  ? 'hero-gradient text-primary-foreground shadow-glow' 
+                  : 'hover:bg-background/80'
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -644,7 +646,7 @@ const CourseTracker: React.FC = () => {
         {/* Courses Tab */}
         {activeTab === 'courses' && (
           <div className="space-y-8 animate-fade-in">
-            <Card className="card-gradient border-0 shadow-elevated">
+            <Card className="card-gradient border border-border/70 shadow-elevated">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
                   <div className="bg-primary/10 p-2 rounded-xl">
@@ -683,7 +685,7 @@ const CourseTracker: React.FC = () => {
                 <Button 
                   onClick={createCourse} 
                   disabled={!newCourse.name.trim() || loading}
-                  className="w-full md:w-auto hero-gradient text-white h-12 px-8 rounded-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
+                  className="w-full md:w-auto hero-gradient text-primary-foreground h-12 px-8 rounded-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   {loading ? 'Creating...' : 'Create Course'}
@@ -697,7 +699,7 @@ const CourseTracker: React.FC = () => {
                 return (
                   <Card 
                     key={course.id} 
-                    className={`group card-gradient border-0 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
+                    className={`group card-gradient border border-border/70 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
                       selectedCourse === course.id ? 'ring-2 ring-primary shadow-glow' : ''
                     }`}
                     style={{ animationDelay: `${index * 100}ms` }}
@@ -783,7 +785,7 @@ const CourseTracker: React.FC = () => {
         {/* Subjects Tab */}
         {activeTab === 'subjects' && (
           <div className="space-y-6 animate-fade-in">
-            <Card className="card-gradient border-0 shadow-elevated">
+            <Card className="card-gradient border border-border/70 shadow-elevated">
               <CardHeader>
                 <CardTitle>Create New Subject</CardTitle>
                 <CardDescription>
@@ -819,7 +821,7 @@ const CourseTracker: React.FC = () => {
                 <Button 
                   onClick={createSubject} 
                   disabled={!newSubject.name.trim() || !selectedCourse || loading}
-                  className="hero-gradient text-white h-12 px-8 rounded-xl"
+                  className="hero-gradient text-primary-foreground h-12 px-8 rounded-xl"
                 >
                   {loading ? 'Creating...' : 'Create Subject'}
                 </Button>
@@ -858,7 +860,7 @@ const CourseTracker: React.FC = () => {
         {/* Syllabus Tab */}
         {activeTab === 'syllabus' && (
           <div className="space-y-6 animate-fade-in">
-            <Card className="card-gradient border-0 shadow-elevated">
+            <Card className="card-gradient border border-border/70 shadow-elevated">
               <CardHeader>
                 <CardTitle>Upload Syllabus</CardTitle>
                 <CardDescription>
@@ -898,7 +900,7 @@ const CourseTracker: React.FC = () => {
                 <Button 
                   onClick={processSyllabus} 
                   disabled={!syllabusText.trim() || !selectedCourse || !selectedSubject || loading}
-                  className="hero-gradient text-white h-12 px-8 rounded-xl"
+                  className="hero-gradient text-primary-foreground h-12 px-8 rounded-xl"
                 >
                   {loading ? 'Processing...' : 'Convert to Checklist'}
                 </Button>
@@ -907,7 +909,7 @@ const CourseTracker: React.FC = () => {
 
             {selectedCourse && courses.find(c => c.id === selectedCourse)?.subjects.map(subject => (
               subject.syllabusChecklist.length > 0 && (
-                <Card key={subject.id} className="mt-6 card-gradient border-0 shadow-elevated">
+                <Card key={subject.id} className="mt-6 card-gradient border border-border/70 shadow-elevated">
                   <CardHeader>
                     <CardTitle>{subject.name} - Syllabus Checklist</CardTitle>
                     <CardDescription>
@@ -956,7 +958,7 @@ const CourseTracker: React.FC = () => {
                 })) || []}
               />
             ) : (
-              <Card className="card-gradient border-0 shadow-elevated">
+              <Card className="card-gradient border border-border/70 shadow-elevated">
                 <CardContent className="py-12 text-center">
                   <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Select a Course</h3>
@@ -988,7 +990,7 @@ const CourseTracker: React.FC = () => {
           <div className="space-y-6 animate-fade-in">
             {viewMode === 'overview' ? (
               <>
-                <Card className="card-gradient border-0 shadow-elevated">
+                <Card className="card-gradient border border-border/70 shadow-elevated">
                   <CardHeader>
                     <CardTitle>Study Analytics Overview</CardTitle>
                     <CardDescription>Track your learning progress across all courses</CardDescription>
@@ -1073,7 +1075,7 @@ const CourseTracker: React.FC = () => {
                         return (
                           <Card 
                             key={course.id} 
-                            className="cursor-pointer card-gradient border-0 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105"
+                            className="cursor-pointer card-gradient border border-border/70 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105"
                             onClick={() => {
                               setSelectedCourseForDetail(course.id);
                               setViewMode('course-detail');
@@ -1112,7 +1114,7 @@ const CourseTracker: React.FC = () => {
             ) : (
               /* Course Detail View */
               selectedCourseForDetail && (
-                <Card className="card-gradient border-0 shadow-elevated">
+                <Card className="card-gradient border border-border/70 shadow-elevated">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
@@ -1167,7 +1169,7 @@ const CourseTracker: React.FC = () => {
                       {courses.find(c => c.id === selectedCourseForDetail)?.subjects.map((subject, index) => {
                         const progress = getSubjectProgressData(selectedCourseForDetail).find(s => s.name === subject.name);
                         return (
-                          <Card key={subject.id} className="card-gradient border-0 shadow-card">
+                          <Card key={subject.id} className="card-gradient border border-border/70 shadow-card">
                             <CardHeader>
                               <CardTitle className="text-lg flex justify-between items-center">
                                 {subject.name}

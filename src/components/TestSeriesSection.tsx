@@ -652,11 +652,11 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
     URL.revokeObjectURL(url);
   };
 
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--destructive))', '#8B5CF6', '#EC4899'];
+  const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--destructive))', 'hsl(var(--primary-glow))', 'hsl(var(--accent-light))'];
 
   if (subjects.length === 0) {
     return (
-      <Card className="card-gradient border-0 shadow-elevated">
+      <Card className="card-gradient border border-border/70 shadow-elevated">
         <CardContent className="py-12 text-center">
           <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No subjects available</h3>
@@ -678,7 +678,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
         {/* Create Dialog */}
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="hero-gradient text-white rounded-xl">
+            <Button className="hero-gradient text-primary-foreground rounded-xl">
               <Plus className="h-4 w-4 mr-2" />
               Add Test Series
             </Button>
@@ -894,7 +894,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
               <Button 
                 onClick={createTestSeries} 
                 disabled={loading}
-                className="hero-gradient text-white"
+                className="hero-gradient text-primary-foreground"
               >
                 {loading ? 'Creating...' : 'Create Test Series'}
               </Button>
@@ -971,7 +971,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
             <Button 
               onClick={saveScores} 
               disabled={loading}
-              className="hero-gradient text-white"
+              className="hero-gradient text-primary-foreground"
             >
               {loading ? 'Saving...' : 'Save Scores'}
             </Button>
@@ -986,7 +986,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
             variant={activeView === 'tests' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveView('tests')}
-            className={`gap-2 rounded-lg ${activeView === 'tests' ? 'hero-gradient text-white' : ''}`}
+            className={`gap-2 rounded-lg ${activeView === 'tests' ? 'hero-gradient text-primary-foreground' : ''}`}
           >
             <Trophy className="h-4 w-4" />
             Tests
@@ -995,7 +995,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
             variant={activeView === 'reports' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveView('reports')}
-            className={`gap-2 rounded-lg ${activeView === 'reports' ? 'hero-gradient text-white' : ''}`}
+            className={`gap-2 rounded-lg ${activeView === 'reports' ? 'hero-gradient text-primary-foreground' : ''}`}
           >
             <FileText className="h-4 w-4" />
             Reports
@@ -1004,7 +1004,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
             variant={activeView === 'analysis' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveView('analysis')}
-            className={`gap-2 rounded-lg ${activeView === 'analysis' ? 'hero-gradient text-white' : ''}`}
+            className={`gap-2 rounded-lg ${activeView === 'analysis' ? 'hero-gradient text-primary-foreground' : ''}`}
           >
             <LineChartIcon className="h-4 w-4" />
             Analysis
@@ -1014,7 +1014,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
       {/* Test Series List */}
       {testSeriesList.length === 0 ? (
-        <Card className="card-gradient border-0 shadow-elevated">
+        <Card className="card-gradient border border-border/70 shadow-elevated">
           <CardContent className="py-12 text-center">
             <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No test series yet</h3>
@@ -1031,7 +1031,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                 return (
                   <Card 
                     key={test.id}
-                    className={`cursor-pointer card-gradient border-0 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
+                    className={`cursor-pointer card-gradient border border-border/70 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
                       selectedTest?.id === test.id ? 'ring-2 ring-primary' : ''
                     }`}
                     onClick={() => {
@@ -1107,7 +1107,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
           {activeView === 'reports' && (
             <div className="space-y-6">
               {/* Test Selector */}
-              <Card className="card-gradient border-0 shadow-elevated">
+              <Card className="card-gradient border border-border/70 shadow-elevated">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1135,7 +1135,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                           variant={selectedTest?.id === test.id ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setSelectedTest(test)}
-                          className={`gap-2 ${selectedTest?.id === test.id ? 'hero-gradient text-white' : ''}`}
+                          className={`gap-2 ${selectedTest?.id === test.id ? 'hero-gradient text-primary-foreground' : ''}`}
                         >
                           {test.name}
                           {result.hasScores && (
@@ -1154,7 +1154,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
               {/* Selected Test Report */}
               {selectedTest ? (
-                <Card className="card-gradient border-0 shadow-elevated">
+                <Card className="card-gradient border border-border/70 shadow-elevated">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
@@ -1280,7 +1280,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="card-gradient border-0 shadow-elevated">
+                <Card className="card-gradient border border-border/70 shadow-elevated">
                   <CardContent className="py-12 text-center">
                     <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Select a Test</h3>
@@ -1297,7 +1297,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
               {getComparisonData().length > 1 ? (
                 <>
                   {/* Overall Score Comparison */}
-                  <Card className="card-gradient border-0 shadow-elevated">
+                  <Card className="card-gradient border border-border/70 shadow-elevated">
                     <CardHeader>
                       <div className="flex items-center gap-3">
                         <TrendingUp className="h-5 w-5 text-primary" />
@@ -1332,7 +1332,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
                   {/* Subject-wise Trend */}
                   {getSubjectWiseComparison().length > 0 && (
-                    <Card className="card-gradient border-0 shadow-elevated">
+                    <Card className="card-gradient border border-border/70 shadow-elevated">
                       <CardHeader>
                         <div className="flex items-center gap-3">
                           <LineChartIcon className="h-5 w-5 text-primary" />
@@ -1379,7 +1379,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                   )}
 
                   {/* Summary Stats */}
-                  <Card className="card-gradient border-0 shadow-elevated">
+                  <Card className="card-gradient border border-border/70 shadow-elevated">
                     <CardHeader>
                       <CardTitle>Performance Summary</CardTitle>
                     </CardHeader>
@@ -1419,7 +1419,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                   </Card>
                 </>
               ) : (
-                <Card className="card-gradient border-0 shadow-elevated">
+                <Card className="card-gradient border border-border/70 shadow-elevated">
                   <CardContent className="py-12 text-center">
                     <LineChartIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Not enough data</h3>

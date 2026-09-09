@@ -55,24 +55,25 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="inline-flex items-center gap-3 mb-4">
+        <div className="text-center mb-10 animate-fade-in">
+          <div className="inline-flex flex-col items-center gap-4">
             <div className="hero-gradient p-3 rounded-2xl shadow-glow">
-              <GraduationCap className="h-8 w-8 text-white" />
+              <GraduationCap className="h-7 w-7 text-primary-foreground" />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <span className="eyebrow">Study journal</span>
+            <h1 className="text-5xl leading-none text-foreground">
               Course Tracker
             </h1>
           </div>
-          <p className="text-muted-foreground">
-            Sign in to manage your learning journey
+          <p className="text-muted-foreground mt-4">
+            Sign in to keep your learning on the page
           </p>
         </div>
 
         {/* Auth Form */}
-        <Card className="card-gradient border-0 shadow-elevated animate-scale-in">
+        <Card className="card-gradient border border-border/70 shadow-elevated animate-scale-in">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl">Welcome</CardTitle>
+            <CardTitle className="text-3xl font-normal">Welcome back</CardTitle>
             <CardDescription>
               Choose your path to continue learning
             </CardDescription>
@@ -132,11 +133,11 @@ const Auth = () => {
                   <Button 
                     type="submit" 
                     disabled={loading}
-                    className="w-full hero-gradient text-white h-12 rounded-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
+                    className="w-full hero-gradient text-primary-foreground h-12 rounded-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
                   >
                     {loading ? (
                       <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
                         Signing in...
                       </div>
                     ) : (
@@ -188,7 +189,7 @@ const Auth = () => {
                   >
                     {loading ? (
                       <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
                         Creating account...
                       </div>
                     ) : (

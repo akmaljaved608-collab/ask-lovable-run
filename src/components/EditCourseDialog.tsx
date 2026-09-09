@@ -174,7 +174,7 @@ export const EditCourseDialog: React.FC<EditCourseDialogProps> = ({
               <Button
                 onClick={handleSave}
                 disabled={!name.trim() || loading}
-                className="hero-gradient text-white gap-2"
+                className="hero-gradient text-primary-foreground gap-2"
               >
                 <Save className="h-4 w-4" />
                 {loading ? "Saving..." : "Save Changes"}
