@@ -576,13 +576,13 @@ const CourseTracker: React.FC = () => {
               </DropdownMenu>
             </div>
           </div>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Transform your learning journey with intelligent progress tracking and comprehensive syllabus management
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
+            A quiet, considered record of everything you are learning — syllabus, streaks, tests and results in one place.
           </p>
         </header>
 
         {/* Progress Overview */}
-        <Card className="mb-8 card-gradient border-0 shadow-elevated animate-scale-in">
+        <Card className="mb-8 card-gradient border border-border/70 shadow-elevated animate-scale-in">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
               <div className="bg-secondary/10 p-2 rounded-xl">
