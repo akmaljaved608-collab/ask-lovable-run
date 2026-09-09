@@ -186,11 +186,27 @@ All colors MUST be HSL.
     transition: all 0.3s var(--animation-smooth);
   }
 
-  /* Academic stats cards */
+  /* Study stat cards — quiet paper panels */
   .stats-card {
-    @apply rounded-xl p-6 border backdrop-blur-sm transition-all duration-300 hover:scale-105;
+    @apply rounded-2xl p-6 border border-border/70 transition-all duration-300;
     background: var(--gradient-card);
     box-shadow: var(--shadow-card);
+  }
+
+  .stats-card:hover {
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-2px);
+  }
+
+  /* Soft surface panel */
+  .surface-soft {
+    background: var(--gradient-soft);
+    @apply border border-border/70 rounded-2xl;
+  }
+
+  /* Editorial eyebrow label */
+  .eyebrow {
+    @apply text-xs uppercase tracking-[0.18em] text-muted-foreground font-medium;
   }
 
   /* Progress ring animations */
