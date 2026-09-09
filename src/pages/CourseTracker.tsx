@@ -646,7 +646,7 @@ const CourseTracker: React.FC = () => {
         {/* Courses Tab */}
         {activeTab === 'courses' && (
           <div className="space-y-8 animate-fade-in">
-            <Card className="card-gradient border-0 shadow-elevated">
+            <Card className="card-gradient border border-border/70 shadow-elevated">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
                   <div className="bg-primary/10 p-2 rounded-xl">
@@ -699,7 +699,7 @@ const CourseTracker: React.FC = () => {
                 return (
                   <Card 
                     key={course.id} 
-                    className={`group card-gradient border-0 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
+                    className={`group card-gradient border border-border/70 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
                       selectedCourse === course.id ? 'ring-2 ring-primary shadow-glow' : ''
                     }`}
                     style={{ animationDelay: `${index * 100}ms` }}
@@ -785,7 +785,7 @@ const CourseTracker: React.FC = () => {
         {/* Subjects Tab */}
         {activeTab === 'subjects' && (
           <div className="space-y-6 animate-fade-in">
-            <Card className="card-gradient border-0 shadow-elevated">
+            <Card className="card-gradient border border-border/70 shadow-elevated">
               <CardHeader>
                 <CardTitle>Create New Subject</CardTitle>
                 <CardDescription>
@@ -860,7 +860,7 @@ const CourseTracker: React.FC = () => {
         {/* Syllabus Tab */}
         {activeTab === 'syllabus' && (
           <div className="space-y-6 animate-fade-in">
-            <Card className="card-gradient border-0 shadow-elevated">
+            <Card className="card-gradient border border-border/70 shadow-elevated">
               <CardHeader>
                 <CardTitle>Upload Syllabus</CardTitle>
                 <CardDescription>
@@ -909,7 +909,7 @@ const CourseTracker: React.FC = () => {
 
             {selectedCourse && courses.find(c => c.id === selectedCourse)?.subjects.map(subject => (
               subject.syllabusChecklist.length > 0 && (
-                <Card key={subject.id} className="mt-6 card-gradient border-0 shadow-elevated">
+                <Card key={subject.id} className="mt-6 card-gradient border border-border/70 shadow-elevated">
                   <CardHeader>
                     <CardTitle>{subject.name} - Syllabus Checklist</CardTitle>
                     <CardDescription>
@@ -958,7 +958,7 @@ const CourseTracker: React.FC = () => {
                 })) || []}
               />
             ) : (
-              <Card className="card-gradient border-0 shadow-elevated">
+              <Card className="card-gradient border border-border/70 shadow-elevated">
                 <CardContent className="py-12 text-center">
                   <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Select a Course</h3>
@@ -990,7 +990,7 @@ const CourseTracker: React.FC = () => {
           <div className="space-y-6 animate-fade-in">
             {viewMode === 'overview' ? (
               <>
-                <Card className="card-gradient border-0 shadow-elevated">
+                <Card className="card-gradient border border-border/70 shadow-elevated">
                   <CardHeader>
                     <CardTitle>Study Analytics Overview</CardTitle>
                     <CardDescription>Track your learning progress across all courses</CardDescription>
@@ -1075,7 +1075,7 @@ const CourseTracker: React.FC = () => {
                         return (
                           <Card 
                             key={course.id} 
-                            className="cursor-pointer card-gradient border-0 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105"
+                            className="cursor-pointer card-gradient border border-border/70 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105"
                             onClick={() => {
                               setSelectedCourseForDetail(course.id);
                               setViewMode('course-detail');
@@ -1114,7 +1114,7 @@ const CourseTracker: React.FC = () => {
             ) : (
               /* Course Detail View */
               selectedCourseForDetail && (
-                <Card className="card-gradient border-0 shadow-elevated">
+                <Card className="card-gradient border border-border/70 shadow-elevated">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
@@ -1169,7 +1169,7 @@ const CourseTracker: React.FC = () => {
                       {courses.find(c => c.id === selectedCourseForDetail)?.subjects.map((subject, index) => {
                         const progress = getSubjectProgressData(selectedCourseForDetail).find(s => s.name === subject.name);
                         return (
-                          <Card key={subject.id} className="card-gradient border-0 shadow-card">
+                          <Card key={subject.id} className="card-gradient border border-border/70 shadow-card">
                             <CardHeader>
                               <CardTitle className="text-lg flex justify-between items-center">
                                 {subject.name}

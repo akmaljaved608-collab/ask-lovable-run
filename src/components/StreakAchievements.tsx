@@ -211,7 +211,7 @@ export const StreakAchievements: React.FC<StreakAchievementsProps> = ({
   }, [currentStreak, totalCompleted, activeDays]);
 
   return (
-    <Card className="card-gradient border-0 shadow-card">
+    <Card className="card-gradient border border-border/70 shadow-card">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Trophy className="h-5 w-5 text-amber-500" />

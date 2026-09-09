@@ -118,7 +118,7 @@ export const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ completedIte
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Calendar */}
-        <Card className="card-gradient border-0 shadow-card">
+        <Card className="card-gradient border border-border/70 shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <CalendarDays className="h-5 w-5 text-primary" />
@@ -139,7 +139,7 @@ export const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ completedIte
         </Card>
 
         {/* Selected Date Details */}
-        <Card className="card-gradient border-0 shadow-card">
+        <Card className="card-gradient border border-border/70 shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">
               {selectedDate 

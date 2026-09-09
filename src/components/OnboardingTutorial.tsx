@@ -108,7 +108,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
         </DialogHeader>
         
         <div className="py-6">
-          <Card className="card-gradient border-0">
+          <Card className="card-gradient border border-border/70">
             <CardContent className="pt-6">
               <p className="text-base leading-relaxed text-muted-foreground">
                 {step.content}

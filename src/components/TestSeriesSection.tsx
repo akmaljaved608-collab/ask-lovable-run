@@ -656,7 +656,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
   if (subjects.length === 0) {
     return (
-      <Card className="card-gradient border-0 shadow-elevated">
+      <Card className="card-gradient border border-border/70 shadow-elevated">
         <CardContent className="py-12 text-center">
           <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No subjects available</h3>
@@ -1014,7 +1014,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
       {/* Test Series List */}
       {testSeriesList.length === 0 ? (
-        <Card className="card-gradient border-0 shadow-elevated">
+        <Card className="card-gradient border border-border/70 shadow-elevated">
           <CardContent className="py-12 text-center">
             <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No test series yet</h3>
@@ -1031,7 +1031,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                 return (
                   <Card 
                     key={test.id}
-                    className={`cursor-pointer card-gradient border-0 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
+                    className={`cursor-pointer card-gradient border border-border/70 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 ${
                       selectedTest?.id === test.id ? 'ring-2 ring-primary' : ''
                     }`}
                     onClick={() => {
@@ -1107,7 +1107,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
           {activeView === 'reports' && (
             <div className="space-y-6">
               {/* Test Selector */}
-              <Card className="card-gradient border-0 shadow-elevated">
+              <Card className="card-gradient border border-border/70 shadow-elevated">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1154,7 +1154,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
               {/* Selected Test Report */}
               {selectedTest ? (
-                <Card className="card-gradient border-0 shadow-elevated">
+                <Card className="card-gradient border border-border/70 shadow-elevated">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
@@ -1280,7 +1280,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="card-gradient border-0 shadow-elevated">
+                <Card className="card-gradient border border-border/70 shadow-elevated">
                   <CardContent className="py-12 text-center">
                     <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Select a Test</h3>
@@ -1297,7 +1297,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
               {getComparisonData().length > 1 ? (
                 <>
                   {/* Overall Score Comparison */}
-                  <Card className="card-gradient border-0 shadow-elevated">
+                  <Card className="card-gradient border border-border/70 shadow-elevated">
                     <CardHeader>
                       <div className="flex items-center gap-3">
                         <TrendingUp className="h-5 w-5 text-primary" />
@@ -1332,7 +1332,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
 
                   {/* Subject-wise Trend */}
                   {getSubjectWiseComparison().length > 0 && (
-                    <Card className="card-gradient border-0 shadow-elevated">
+                    <Card className="card-gradient border border-border/70 shadow-elevated">
                       <CardHeader>
                         <div className="flex items-center gap-3">
                           <LineChartIcon className="h-5 w-5 text-primary" />
@@ -1379,7 +1379,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                   )}
 
                   {/* Summary Stats */}
-                  <Card className="card-gradient border-0 shadow-elevated">
+                  <Card className="card-gradient border border-border/70 shadow-elevated">
                     <CardHeader>
                       <CardTitle>Performance Summary</CardTitle>
                     </CardHeader>
@@ -1419,7 +1419,7 @@ export const TestSeriesSection: React.FC<TestSeriesSectionProps> = ({ courseId, 
                   </Card>
                 </>
               ) : (
-                <Card className="card-gradient border-0 shadow-elevated">
+                <Card className="card-gradient border border-border/70 shadow-elevated">
                   <CardContent className="py-12 text-center">
                     <LineChartIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Not enough data</h3>
