@@ -38,6 +38,7 @@ interface ChecklistItem {
   id: string;
   content: string;
   completed: boolean;
+  weightage: number;
   dateCompleted?: string;
 }
 
