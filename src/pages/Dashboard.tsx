@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { StreakAchievements, getAchievementsForExport } from "@/components/StreakAchievements";
+import { StudyTimeTracker } from "@/components/StudyTimeTracker";
 import {
   LayoutDashboard,
   BookOpen,
