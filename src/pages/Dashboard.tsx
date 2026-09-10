@@ -578,7 +578,9 @@ export default function Dashboard() {
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>
-                      {course.completedItems}/{course.totalItems} items
+                      {course.totalWeightage > 0
+                        ? `${Math.round(course.completedWeightage * 10) / 10}/${Math.round(course.totalWeightage * 10) / 10}% weight`
+                        : `${course.completedItems}/${course.totalItems} items`}
                     </span>
                     <span>{course.subjectCount} subjects</span>
                   </div>
