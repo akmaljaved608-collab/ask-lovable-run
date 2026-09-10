@@ -536,6 +536,11 @@ export default function Dashboard() {
           </Card>
         </div>
 
+        {/* Study Time Tracker */}
+        <div className="mb-8">
+          {user?.id && <StudyTimeTracker userId={user.id} />}
+        </div>
+
         {/* Course Summaries */}
         <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
           <BookOpen className="h-6 w-6 text-primary" />
