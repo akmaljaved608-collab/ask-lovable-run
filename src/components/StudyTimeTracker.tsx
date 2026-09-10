@@ -14,8 +14,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Clock, Plus, Timer, Trash2 } from "lucide-react";
-import { format, parseISO, subDays } from "date-fns";
+import { Clock, Download, FileText, Plus, Target, Timer, Trash2 } from "lucide-react";
+import {
+  eachDayOfInterval,
+  format,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+  subDays,
+  subMonths,
+} from "date-fns";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip as ChartTooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SubjectOption {
   id: string;
@@ -52,8 +71,14 @@ export function StudyTimeTracker({ userId }: { userId: string }) {
   const [studiedOn, setStudiedOn] = useState(format(new Date(), "yyyy-MM-dd"));
   const [note, setNote] = useState("");
 
+  const [dailyGoal, setDailyGoal] = useState(60);
+  const [weeklyGoal, setWeeklyGoal] = useState(420);
+  const [dailyGoalInput, setDailyGoalInput] = useState("60");
+  const [weeklyGoalInput, setWeeklyGoalInput] = useState("420");
+  const [savingGoals, setSavingGoals] = useState(false);
+
   const loadData = async () => {
-    const [{ data: courseData }, { data: sessionData }] = await Promise.all([
+    const [{ data: courseData }, { data: sessionData }, { data: profileData }] = await Promise.all([
       supabase
         .from("courses")
         .select("id, name, subjects(id, name)")
@@ -65,7 +90,21 @@ export function StudyTimeTracker({ userId }: { userId: string }) {
         .eq("user_id", userId)
         .order("studied_on", { ascending: false })
         .order("created_at", { ascending: false }),
+      supabase
+        .from("profiles")
+        .select("daily_goal_minutes, weekly_goal_minutes")
+        .eq("user_id", userId)
+        .maybeSingle(),
     ]);
+
+    if (profileData) {
+      const d = (profileData as any).daily_goal_minutes ?? 60;
+      const w = (profileData as any).weekly_goal_minutes ?? 420;
+      setDailyGoal(d);
+      setWeeklyGoal(w);
+      setDailyGoalInput(String(d));
+      setWeeklyGoalInput(String(w));
+    }
 
     const options: SubjectOption[] = [];
     (courseData ?? []).forEach((course: any) => {
@@ -113,6 +152,148 @@ export function StudyTimeTracker({ userId }: { userId: string }) {
 
     return { todayMinutes, weekMinutes, allMinutes, bySubject };
   }, [sessions, subjectMap]);
+
+  const minutesByDate = useMemo(() => {
+    const map: Record<string, number> = {};
+    sessions.forEach((s) => {
+      map[s.studied_on] = (map[s.studied_on] ?? 0) + s.minutes;
+    });
+    return map;
+  }, [sessions]);
+
+  const weeklyChart = useMemo(() => {
+    const days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
+    return days.map((day) => {
+      const key = format(day, "yyyy-MM-dd");
+      const mins = minutesByDate[key] ?? 0;
+      return {
+        label: format(day, "EEE"),
+        minutes: mins,
+        hours: Number((mins / 60).toFixed(2)),
+        metGoal: dailyGoal > 0 && mins >= dailyGoal,
+      };
+    });
+  }, [minutesByDate, dailyGoal]);
+
+  const monthlyChart = useMemo(() => {
+    const weeks: { label: string; minutes: number; hours: number; metGoal: boolean }[] = [];
+    for (let i = 3; i >= 0; i--) {
+      const start = startOfWeek(subDays(new Date(), i * 7), { weekStartsOn: 1 });
+      const days = eachDayOfInterval({ start, end: subDays(start, -6) });
+      const mins = days.reduce((sum, d) => sum + (minutesByDate[format(d, "yyyy-MM-dd")] ?? 0), 0);
+      weeks.push({
+        label: `${format(start, "dd MMM")}`,
+        minutes: mins,
+        hours: Number((mins / 60).toFixed(2)),
+        metGoal: weeklyGoal > 0 && mins >= weeklyGoal,
+      });
+    }
+    return weeks;
+  }, [minutesByDate, weeklyGoal]);
+
+  const monthTotals = useMemo(() => {
+    const thisMonthStart = format(startOfMonth(new Date()), "yyyy-MM-dd");
+    const lastMonthStart = format(startOfMonth(subMonths(new Date(), 1)), "yyyy-MM-dd");
+    let thisMonth = 0;
+    let lastMonth = 0;
+    sessions.forEach((s) => {
+      if (s.studied_on >= thisMonthStart) thisMonth += s.minutes;
+      else if (s.studied_on >= lastMonthStart) lastMonth += s.minutes;
+    });
+    return { thisMonth, lastMonth };
+  }, [sessions]);
+
+  const dailyPct = dailyGoal > 0 ? Math.min(100, (totals.todayMinutes / dailyGoal) * 100) : 0;
+  const weeklyPct = weeklyGoal > 0 ? Math.min(100, (totals.weekMinutes / weeklyGoal) * 100) : 0;
+
+  const handleSaveGoals = async () => {
+    const d = Math.max(0, parseInt(dailyGoalInput || "0", 10) || 0);
+    const w = Math.max(0, parseInt(weeklyGoalInput || "0", 10) || 0);
+    setSavingGoals(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ daily_goal_minutes: d, weekly_goal_minutes: w } as any)
+      .eq("user_id", userId);
+    setSavingGoals(false);
+    if (error) {
+      toast({ title: "Could not save goals", description: error.message, variant: "destructive" });
+      return;
+    }
+    setDailyGoal(d);
+    setWeeklyGoal(w);
+    toast({ title: "Goals updated", description: `${formatMinutes(d)} a day · ${formatMinutes(w)} a week.` });
+  };
+
+  const exportCsv = () => {
+    const rows = [
+      ["Date", "Course", "Subject", "Minutes", "Hours", "Note"],
+      ...sessions.map((s) => [
+        s.studied_on,
+        subjectMap[s.subject_id]?.courseName ?? "",
+        subjectMap[s.subject_id]?.name ?? "",
+        String(s.minutes),
+        (s.minutes / 60).toFixed(2),
+        (s.note ?? "").replace(/"/g, '""'),
+      ]),
+      [],
+      ["Totals"],
+      ["Today", "", "", String(totals.todayMinutes), (totals.todayMinutes / 60).toFixed(2), ""],
+      ["Last 7 days", "", "", String(totals.weekMinutes), (totals.weekMinutes / 60).toFixed(2), ""],
+      ["This month", "", "", String(monthTotals.thisMonth), (monthTotals.thisMonth / 60).toFixed(2), ""],
+      ["All time", "", "", String(totals.allMinutes), (totals.allMinutes / 60).toFixed(2), ""],
+    ];
+    const csv = rows.map((r) => r.map((cell) => `"${cell ?? ""}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `study-time-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV downloaded", description: `${sessions.length} sessions exported.` });
+  };
+
+  const exportPdf = () => {
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast({ title: "Allow pop-ups", description: "Enable pop-ups to save the PDF.", variant: "destructive" });
+      return;
+    }
+    const rowsHtml = sessions
+      .map(
+        (s) => `<tr><td>${format(parseISO(s.studied_on), "dd MMM yyyy")}</td><td>${
+          subjectMap[s.subject_id]?.courseName ?? ""
+        }</td><td>${subjectMap[s.subject_id]?.name ?? ""}</td><td>${formatMinutes(s.minutes)}</td><td>${
+          s.note ?? ""
+        }</td></tr>`
+      )
+      .join("");
+    const subjectHtml = totals.bySubject
+      .map((e) => `<tr><td>${e.subject.name}</td><td>${e.subject.courseName}</td><td>${formatMinutes(e.minutes)}</td></tr>`)
+      .join("");
+    win.document.write(`<!doctype html><html><head><title>Study Time Report</title>
+<style>body{font-family:Georgia,serif;margin:32px;color:#1f2933}h1{font-size:24px}h2{font-size:16px;margin-top:28px}
+table{width:100%;border-collapse:collapse;font-size:12px;font-family:Arial,sans-serif}
+th,td{border:1px solid #d6dbe1;padding:6px 8px;text-align:left}th{background:#f2f5f7}
+ul{font-size:13px;font-family:Arial,sans-serif}</style></head><body>
+<h1>Study Time Report</h1>
+<p>Generated ${format(new Date(), "dd MMM yyyy")}</p>
+<h2>Totals</h2>
+<ul>
+<li>Today: ${formatMinutes(totals.todayMinutes)} (goal ${formatMinutes(dailyGoal)}, ${Math.round(dailyPct)}%)</li>
+<li>Last 7 days: ${formatMinutes(totals.weekMinutes)} (goal ${formatMinutes(weeklyGoal)}, ${Math.round(weeklyPct)}%)</li>
+<li>This month: ${formatMinutes(monthTotals.thisMonth)}</li>
+<li>Last month: ${formatMinutes(monthTotals.lastMonth)}</li>
+<li>All time: ${formatMinutes(totals.allMinutes)}</li>
+</ul>
+<h2>Time per subject</h2>
+<table><thead><tr><th>Subject</th><th>Course</th><th>Time</th></tr></thead><tbody>${subjectHtml}</tbody></table>
+<h2>All sessions</h2>
+<table><thead><tr><th>Date</th><th>Course</th><th>Subject</th><th>Time</th><th>Note</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+</body></html>`);
+    win.document.close();
+    win.focus();
+    win.print();
+  };
 
   const handleAdd = async () => {
     const total = (parseInt(hours || "0", 10) || 0) * 60 + (parseInt(minutes || "0", 10) || 0);

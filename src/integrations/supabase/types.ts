@@ -47,6 +47,7 @@ export type Database = {
           bio: string | null
           color_scheme: string | null
           created_at: string
+          daily_goal_minutes: number
           display_name: string | null
           id: string
           location: string | null
@@ -54,12 +55,14 @@ export type Database = {
           tutorial_completed: boolean | null
           updated_at: string
           user_id: string
+          weekly_goal_minutes: number
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
           color_scheme?: string | null
           created_at?: string
+          daily_goal_minutes?: number
           display_name?: string | null
           id?: string
           location?: string | null
@@ -67,12 +70,14 @@ export type Database = {
           tutorial_completed?: boolean | null
           updated_at?: string
           user_id: string
+          weekly_goal_minutes?: number
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
           color_scheme?: string | null
           created_at?: string
+          daily_goal_minutes?: number
           display_name?: string | null
           id?: string
           location?: string | null
@@ -80,6 +85,7 @@ export type Database = {
           tutorial_completed?: boolean | null
           updated_at?: string
           user_id?: string
+          weekly_goal_minutes?: number
         }
         Relationships: []
       }
