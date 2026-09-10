@@ -549,8 +549,10 @@ const CourseTracker: React.FC = () => {
     }
   };
 
-  const { completedToday, totalCompleted, totalItems } = getDailyProgress();
-  const overallProgress = totalItems > 0 ? (totalCompleted / totalItems) * 100 : 0;
+  const { completedToday, totalCompleted, totalItems, weightageDone, weightageTotal } = getDailyProgress();
+  const overallProgress = weightageTotal > 0
+    ? (weightageDone / weightageTotal) * 100
+    : totalItems > 0 ? (totalCompleted / totalItems) * 100 : 0;
   const courseChartData = getCourseChartData();
   const completedItemsForCalendar = getCompletedItemsForCalendar();
 
@@ -653,7 +655,9 @@ const CourseTracker: React.FC = () => {
               <div>
                 <CardTitle className="text-2xl">Today's Learning Progress</CardTitle>
                 <CardDescription className="text-base">
-                  {completedToday} items completed today • {totalCompleted}/{totalItems} total completed
+                  {completedToday} items completed today • {weightageTotal > 0
+                    ? `${Math.round(weightageDone * 10) / 10}/${Math.round(weightageTotal * 10) / 10}% weightage done`
+                    : `${totalCompleted}/${totalItems} total completed`}
                 </CardDescription>
               </div>
             </div>
@@ -822,10 +826,12 @@ const CourseTracker: React.FC = () => {
                           <BookOpen className="h-4 w-4" />
                           {course.subjects.length} subjects
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Award className="h-4 w-4" />
-                          {progress.completed}/{progress.total} items
-                        </div>
+                         <div className="flex items-center gap-1">
+                           <Award className="h-4 w-4" />
+                           {progress.weightageTotal > 0
+                             ? `${Math.round(progress.weightageDone * 10) / 10}/${Math.round(progress.weightageTotal * 10) / 10}% weight`
+                             : `${progress.completed}/${progress.total} items`}
+                         </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -1237,7 +1243,9 @@ const CourseTracker: React.FC = () => {
                                      style={{ width: `${progress.percentage}%` }} />
                               </div>
                               <div className="text-sm text-muted-foreground flex justify-between">
-                                <span>{progress.completed}/{progress.total} completed</span>
+                                 <span>{progress.weightageTotal > 0
+                                   ? `${Math.round(progress.weightageDone * 10) / 10}/${Math.round(progress.weightageTotal * 10) / 10}% weightage`
+                                   : `${progress.completed}/${progress.total} completed`}</span>
                                 <span>{course.subjects.length} subjects</span>
                               </div>
                             </CardContent>
@@ -1331,7 +1339,9 @@ const CourseTracker: React.FC = () => {
                                 />
                               </div>
                               <div className="text-sm text-muted-foreground">
-                                {progress?.completed}/{progress?.total} items completed
+                                 {progress && progress.weightageTotal > 0
+                                   ? `${Math.round(progress.weightageDone * 10) / 10}/${Math.round(progress.weightageTotal * 10) / 10}% weightage • ${progress.completed}/${progress.total} items completed`
+                                   : `${progress?.completed}/${progress?.total} items completed`}
                               </div>
                             </CardContent>
                           </Card>
