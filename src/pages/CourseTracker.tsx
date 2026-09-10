@@ -941,25 +941,94 @@ const CourseTracker: React.FC = () => {
                     </select>
                   </div>
                 )}
-                <div className="space-y-2">
-                  <Label htmlFor="syllabus-text">Syllabus Content</Label>
-                  <Textarea
-                    id="syllabus-text"
-                    value={syllabusText}
-                    onChange={(e) => setSyllabusText(e.target.value)}
-                    placeholder="Paste your syllabus content here (one topic per line)"
-                    rows={6}
-                    disabled={!selectedCourse || !selectedSubject}
-                    className="rounded-xl"
-                  />
-                </div>
-                <Button 
-                  onClick={processSyllabus} 
-                  disabled={!syllabusText.trim() || !selectedCourse || !selectedSubject || loading}
-                  className="hero-gradient text-primary-foreground h-12 px-8 rounded-xl"
-                >
-                  {loading ? 'Processing...' : 'Convert to Checklist'}
-                </Button>
+                {pendingItems.length === 0 ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="syllabus-text">Syllabus Content</Label>
+                      <Textarea
+                        id="syllabus-text"
+                        value={syllabusText}
+                        onChange={(e) => setSyllabusText(e.target.value)}
+                        placeholder="Paste your syllabus content here (one topic per line)"
+                        rows={6}
+                        disabled={!selectedCourse || !selectedSubject}
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <Button 
+                      onClick={processSyllabus} 
+                      disabled={!syllabusText.trim() || !selectedCourse || !selectedSubject || loading}
+                      className="hero-gradient text-primary-foreground h-12 px-8 rounded-xl"
+                    >
+                      Continue to Weightage
+                    </Button>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-border/70 p-4 surface-soft">
+                      <p className="text-sm text-muted-foreground">
+                        Give every topic its exam weightage. All weightages together must add up to
+                        exactly 100%. Nothing is saved until they do.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      {pendingItems.map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-3 rounded-lg border border-border"
+                        >
+                          <span className="flex-1 text-sm">{item.content}</span>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.5"
+                              value={item.weightage}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setPendingItems(prev =>
+                                  prev.map((p, i) => (i === index ? { ...p, weightage: value } : p))
+                                );
+                              }}
+                              placeholder="0"
+                              className="w-24 rounded-lg"
+                            />
+                            <span className="text-sm text-muted-foreground">%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div
+                      className={`text-sm font-medium ${
+                        pendingWeightageValid ? 'text-primary' : 'text-destructive'
+                      }`}
+                    >
+                      Total weightage: {Math.round(pendingTotalWeightage * 100) / 100}% of 100%
+                      {!pendingWeightageValid && ' — adjust the values to reach exactly 100%'}
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        onClick={saveSyllabus}
+                        disabled={!pendingWeightageValid || loading}
+                        className="hero-gradient text-primary-foreground h-12 px-8 rounded-xl"
+                      >
+                        {loading ? 'Saving...' : 'Save Syllabus'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setPendingItems([])}
+                        disabled={loading}
+                        className="h-12 px-6 rounded-xl"
+                      >
+                        Back to Editing
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -970,7 +1039,13 @@ const CourseTracker: React.FC = () => {
                     <CardTitle>{subject.name} - Syllabus Checklist</CardTitle>
                     <CardDescription>
                       {subject.syllabusChecklist.filter(item => item.completed).length}/
-                      {subject.syllabusChecklist.length} completed
+                      {subject.syllabusChecklist.length} completed ·{' '}
+                      {Math.round(
+                        subject.syllabusChecklist
+                          .filter(item => item.completed)
+                          .reduce((sum, item) => sum + item.weightage, 0) * 10
+                      ) / 10}
+                      % of weightage covered
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
