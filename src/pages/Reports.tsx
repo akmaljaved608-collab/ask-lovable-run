@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +38,7 @@ interface TestSeriesStats {
 
 export default function Reports() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [period, setPeriod] = useState("week");
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
