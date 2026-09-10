@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { StreakAchievements, getAchievementsForExport } from "@/components/StreakAchievements";
+import { StudyTimeTracker } from "@/components/StudyTimeTracker";
 import {
   LayoutDashboard,
   BookOpen,
@@ -534,6 +535,11 @@ export default function Dashboard() {
               )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* Study Time Tracker */}
+        <div className="mb-8">
+          {user?.id && <StudyTimeTracker userId={user.id} />}
         </div>
 
         {/* Course Summaries */}
