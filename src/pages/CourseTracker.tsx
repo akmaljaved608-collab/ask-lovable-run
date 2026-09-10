@@ -38,6 +38,7 @@ interface ChecklistItem {
   id: string;
   content: string;
   completed: boolean;
+  weightage: number;
   dateCompleted?: string;
 }
 
@@ -56,6 +57,7 @@ const CourseTracker: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [syllabusText, setSyllabusText] = useState('');
+  const [pendingItems, setPendingItems] = useState<{ content: string; weightage: string }[]>([]);
   const [activeTab, setActiveTab] = useState('courses');
   const [viewMode, setViewMode] = useState<'overview' | 'course-detail'>('overview');
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<string | null>(null);
@@ -161,6 +163,7 @@ const CourseTracker: React.FC = () => {
             id: item.id,
             content: item.content,
             completed: item.completed,
+            weightage: Number(item.weightage) || 0,
             dateCompleted: item.date_completed
           })) || []
         })) || []
@@ -246,15 +249,35 @@ const CourseTracker: React.FC = () => {
     }
   };
 
-  const processSyllabus = async () => {
-    if (!syllabusText.trim() || !selectedCourse || !selectedSubject || !user) return;
+  const processSyllabus = () => {
+    if (!syllabusText.trim() || !selectedCourse || !selectedSubject) return;
+    const lines = syllabusText.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return;
+    setPendingItems(lines.map(content => ({ content, weightage: '' })));
+  };
+
+  const pendingTotalWeightage = pendingItems.reduce(
+    (sum, item) => sum + (parseFloat(item.weightage) || 0),
+    0
+  );
+
+  const pendingWeightageValid =
+    pendingItems.length > 0 &&
+    pendingItems.every(item => {
+      const value = parseFloat(item.weightage);
+      return !isNaN(value) && value > 0;
+    }) &&
+    Math.round(pendingTotalWeightage * 100) / 100 === 100;
+
+  const saveSyllabus = async () => {
+    if (!selectedSubject || !user || !pendingWeightageValid) return;
 
     try {
       setLoading(true);
-      const lines = syllabusText.split('\n').filter(line => line.trim());
-      const syllabusItems = lines.map(line => ({
-        content: line.trim(),
+      const syllabusItems = pendingItems.map(item => ({
+        content: item.content,
         completed: false,
+        weightage: parseFloat(item.weightage),
         subject_id: selectedSubject
       }));
 
@@ -266,13 +289,14 @@ const CourseTracker: React.FC = () => {
 
       await loadCourses();
       setSyllabusText('');
+      setPendingItems([]);
       toast({
-        title: "Syllabus processed successfully!",
-        description: `${lines.length} items added to your syllabus.`,
+        title: "Syllabus saved!",
+        description: `${syllabusItems.length} topics added with exam weightage.`,
       });
     } catch (error: any) {
       toast({
-        title: "Error processing syllabus",
+        title: "Error saving syllabus",
         description: error.message,
         variant: "destructive",
       });
@@ -346,18 +370,26 @@ const CourseTracker: React.FC = () => {
 
     let completed = 0;
     let total = 0;
+    let weightageDone = 0;
+    let weightageTotal = 0;
 
     course.subjects.forEach(subject => {
       subject.syllabusChecklist.forEach(item => {
         total++;
-        if (item.completed) completed++;
+        weightageTotal += item.weightage;
+        if (item.completed) {
+          completed++;
+          weightageDone += item.weightage;
+        }
       });
     });
 
     return { 
       completed, 
       total, 
-      percentage: total > 0 ? (completed / total) * 100 : 0 
+      percentage: weightageTotal > 0
+        ? (weightageDone / weightageTotal) * 100
+        : (total > 0 ? (completed / total) * 100 : 0)
     };
   };
 
@@ -380,16 +412,26 @@ const CourseTracker: React.FC = () => {
     return course.subjects.map(subject => {
       let completed = 0;
       let total = subject.syllabusChecklist.length;
-      
+      let weightageDone = 0;
+      let weightageTotal = 0;
+
       subject.syllabusChecklist.forEach(item => {
-        if (item.completed) completed++;
+        weightageTotal += item.weightage;
+        if (item.completed) {
+          completed++;
+          weightageDone += item.weightage;
+        }
       });
 
       return {
         name: subject.name,
-        value: total > 0 ? (completed / total) * 100 : 0,
+        value: weightageTotal > 0
+          ? (weightageDone / weightageTotal) * 100
+          : (total > 0 ? (completed / total) * 100 : 0),
         completed,
-        total
+        total,
+        weightageDone,
+        weightageTotal
       };
     });
   };
@@ -457,6 +499,7 @@ const CourseTracker: React.FC = () => {
           const syllabusItems = subject.syllabusChecklist.map(item => ({
             content: item.content,
             completed: false,
+            weightage: item.weightage,
             subject_id: newSubject.id
           }));
 
@@ -898,25 +941,94 @@ const CourseTracker: React.FC = () => {
                     </select>
                   </div>
                 )}
-                <div className="space-y-2">
-                  <Label htmlFor="syllabus-text">Syllabus Content</Label>
-                  <Textarea
-                    id="syllabus-text"
-                    value={syllabusText}
-                    onChange={(e) => setSyllabusText(e.target.value)}
-                    placeholder="Paste your syllabus content here (one topic per line)"
-                    rows={6}
-                    disabled={!selectedCourse || !selectedSubject}
-                    className="rounded-xl"
-                  />
-                </div>
-                <Button 
-                  onClick={processSyllabus} 
-                  disabled={!syllabusText.trim() || !selectedCourse || !selectedSubject || loading}
-                  className="hero-gradient text-primary-foreground h-12 px-8 rounded-xl"
-                >
-                  {loading ? 'Processing...' : 'Convert to Checklist'}
-                </Button>
+                {pendingItems.length === 0 ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="syllabus-text">Syllabus Content</Label>
+                      <Textarea
+                        id="syllabus-text"
+                        value={syllabusText}
+                        onChange={(e) => setSyllabusText(e.target.value)}
+                        placeholder="Paste your syllabus content here (one topic per line)"
+                        rows={6}
+                        disabled={!selectedCourse || !selectedSubject}
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <Button 
+                      onClick={processSyllabus} 
+                      disabled={!syllabusText.trim() || !selectedCourse || !selectedSubject || loading}
+                      className="hero-gradient text-primary-foreground h-12 px-8 rounded-xl"
+                    >
+                      Continue to Weightage
+                    </Button>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-border/70 p-4 surface-soft">
+                      <p className="text-sm text-muted-foreground">
+                        Give every topic its exam weightage. All weightages together must add up to
+                        exactly 100%. Nothing is saved until they do.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      {pendingItems.map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-3 rounded-lg border border-border"
+                        >
+                          <span className="flex-1 text-sm">{item.content}</span>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.5"
+                              value={item.weightage}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setPendingItems(prev =>
+                                  prev.map((p, i) => (i === index ? { ...p, weightage: value } : p))
+                                );
+                              }}
+                              placeholder="0"
+                              className="w-24 rounded-lg"
+                            />
+                            <span className="text-sm text-muted-foreground">%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div
+                      className={`text-sm font-medium ${
+                        pendingWeightageValid ? 'text-primary' : 'text-destructive'
+                      }`}
+                    >
+                      Total weightage: {Math.round(pendingTotalWeightage * 100) / 100}% of 100%
+                      {!pendingWeightageValid && ' — adjust the values to reach exactly 100%'}
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        onClick={saveSyllabus}
+                        disabled={!pendingWeightageValid || loading}
+                        className="hero-gradient text-primary-foreground h-12 px-8 rounded-xl"
+                      >
+                        {loading ? 'Saving...' : 'Save Syllabus'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setPendingItems([])}
+                        disabled={loading}
+                        className="h-12 px-6 rounded-xl"
+                      >
+                        Back to Editing
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -927,7 +1039,13 @@ const CourseTracker: React.FC = () => {
                     <CardTitle>{subject.name} - Syllabus Checklist</CardTitle>
                     <CardDescription>
                       {subject.syllabusChecklist.filter(item => item.completed).length}/
-                      {subject.syllabusChecklist.length} completed
+                      {subject.syllabusChecklist.length} completed ·{' '}
+                      {Math.round(
+                        subject.syllabusChecklist
+                          .filter(item => item.completed)
+                          .reduce((sum, item) => sum + item.weightage, 0) * 10
+                      ) / 10}
+                      % of weightage covered
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -942,6 +1060,9 @@ const CourseTracker: React.FC = () => {
                           />
                           <span className={`flex-1 ${item.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                             {item.content}
+                          </span>
+                          <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
+                            {item.weightage}%
                           </span>
                           {item.dateCompleted && (
                             <span className="text-xs text-muted-foreground">
