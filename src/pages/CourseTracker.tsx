@@ -499,6 +499,7 @@ const CourseTracker: React.FC = () => {
           const syllabusItems = subject.syllabusChecklist.map(item => ({
             content: item.content,
             completed: false,
+            weightage: item.weightage,
             subject_id: newSubject.id
           }));
 
