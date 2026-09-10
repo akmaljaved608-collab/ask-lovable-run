@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,11 @@ const App = () => (
               <Route path="/reports" element={
                 <AuthGuard>
                   <Reports />
+                </AuthGuard>
+              } />
+              <Route path="/dashboard" element={
+                <AuthGuard>
+                  <Dashboard />
                 </AuthGuard>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

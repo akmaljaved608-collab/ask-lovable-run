@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, TrendingUp, Target, Clock, Download, BarChart3, ClipboardCheck } from "lucide-react";
+import { Calendar, TrendingUp, Target, Clock, Download, BarChart3, ClipboardCheck, LayoutDashboard } from "lucide-react";
 import { format, startOfWeek, startOfMonth, subWeeks, subMonths, startOfDay, subDays, isSameDay } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { getAchievementsForExport } from "@/components/StreakAchievements";
@@ -37,6 +38,7 @@ interface TestSeriesStats {
 
 export default function Reports() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [period, setPeriod] = useState("week");
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
@@ -443,6 +445,10 @@ export default function Reports() {
             <p className="text-muted-foreground">Track your learning progress over time</p>
           </div>
           <div className="flex items-center gap-4">
+            <Button onClick={() => navigate('/dashboard')} variant="outline">
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              Dashboard
+            </Button>
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger className="w-40">
                 <SelectValue />
