@@ -163,6 +163,7 @@ const CourseTracker: React.FC = () => {
             id: item.id,
             content: item.content,
             completed: item.completed,
+            weightage: Number(item.weightage) || 0,
             dateCompleted: item.date_completed
           })) || []
         })) || []
