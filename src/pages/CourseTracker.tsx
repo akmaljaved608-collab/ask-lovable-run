@@ -57,6 +57,7 @@ const CourseTracker: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [syllabusText, setSyllabusText] = useState('');
+  const [pendingItems, setPendingItems] = useState<{ content: string; weightage: string }[]>([]);
   const [activeTab, setActiveTab] = useState('courses');
   const [viewMode, setViewMode] = useState<'overview' | 'course-detail'>('overview');
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<string | null>(null);
