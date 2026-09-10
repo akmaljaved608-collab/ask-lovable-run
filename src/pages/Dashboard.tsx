@@ -123,9 +123,14 @@ export default function Dashboard() {
       const completedDates: string[] = [];
       const recent: RecentActivity[] = [];
 
+      let weightageTotalSum = 0;
+      let weightageCompletedSum = 0;
+
       coursesData?.forEach((course: any) => {
         let courseTotal = 0;
         let courseCompleted = 0;
+        let courseWeightageTotal = 0;
+        let courseWeightageCompleted = 0;
         const subjectList = course.subjects || [];
         subjectsCount += subjectList.length;
 
@@ -134,10 +139,13 @@ export default function Dashboard() {
           itemsCount += items.length;
 
           items.forEach((item: any) => {
+            const weight = Number(item.weightage) || 0;
             courseTotal++;
+            courseWeightageTotal += weight;
             if (item.completed) {
               courseCompleted++;
               completedCount++;
+              courseWeightageCompleted += weight;
               if (item.date_completed) {
                 completedDates.push(item.date_completed);
                 recent.push({
@@ -152,6 +160,17 @@ export default function Dashboard() {
           });
         });
 
+        weightageTotalSum += courseWeightageTotal;
+        weightageCompletedSum += courseWeightageCompleted;
+
+        // Prefer weightage-based progress; fall back to item count for legacy data without weightage
+        const percentage =
+          courseWeightageTotal > 0
+            ? (courseWeightageCompleted / courseWeightageTotal) * 100
+            : courseTotal > 0
+              ? (courseCompleted / courseTotal) * 100
+              : 0;
+
         courseSummaries.push({
           id: course.id,
           name: course.name,
@@ -159,7 +178,9 @@ export default function Dashboard() {
           subjectCount: subjectList.length,
           totalItems: courseTotal,
           completedItems: courseCompleted,
-          percentage: courseTotal > 0 ? (courseCompleted / courseTotal) * 100 : 0,
+          totalWeightage: courseWeightageTotal,
+          completedWeightage: courseWeightageCompleted,
+          percentage,
         });
       });
 
