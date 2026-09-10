@@ -249,15 +249,35 @@ const CourseTracker: React.FC = () => {
     }
   };
 
-  const processSyllabus = async () => {
-    if (!syllabusText.trim() || !selectedCourse || !selectedSubject || !user) return;
+  const processSyllabus = () => {
+    if (!syllabusText.trim() || !selectedCourse || !selectedSubject) return;
+    const lines = syllabusText.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return;
+    setPendingItems(lines.map(content => ({ content, weightage: '' })));
+  };
+
+  const pendingTotalWeightage = pendingItems.reduce(
+    (sum, item) => sum + (parseFloat(item.weightage) || 0),
+    0
+  );
+
+  const pendingWeightageValid =
+    pendingItems.length > 0 &&
+    pendingItems.every(item => {
+      const value = parseFloat(item.weightage);
+      return !isNaN(value) && value > 0;
+    }) &&
+    Math.round(pendingTotalWeightage * 100) / 100 === 100;
+
+  const saveSyllabus = async () => {
+    if (!selectedSubject || !user || !pendingWeightageValid) return;
 
     try {
       setLoading(true);
-      const lines = syllabusText.split('\n').filter(line => line.trim());
-      const syllabusItems = lines.map(line => ({
-        content: line.trim(),
+      const syllabusItems = pendingItems.map(item => ({
+        content: item.content,
         completed: false,
+        weightage: parseFloat(item.weightage),
         subject_id: selectedSubject
       }));
 
@@ -269,13 +289,14 @@ const CourseTracker: React.FC = () => {
 
       await loadCourses();
       setSyllabusText('');
+      setPendingItems([]);
       toast({
-        title: "Syllabus processed successfully!",
-        description: `${lines.length} items added to your syllabus.`,
+        title: "Syllabus saved!",
+        description: `${syllabusItems.length} topics added with exam weightage.`,
       });
     } catch (error: any) {
       toast({
-        title: "Error processing syllabus",
+        title: "Error saving syllabus",
         description: error.message,
         variant: "destructive",
       });
