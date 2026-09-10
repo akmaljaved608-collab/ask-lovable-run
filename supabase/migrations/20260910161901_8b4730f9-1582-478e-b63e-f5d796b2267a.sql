@@ -1,0 +1,1 @@
+ALTER TABLE public.syllabus_items ADD COLUMN IF NOT EXISTS weightage numeric NOT NULL DEFAULT 0;

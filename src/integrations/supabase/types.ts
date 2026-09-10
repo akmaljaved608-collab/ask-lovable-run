@@ -127,6 +127,7 @@ export type Database = {
           id: string
           subject_id: string
           updated_at: string
+          weightage: number
         }
         Insert: {
           completed?: boolean
@@ -136,6 +137,7 @@ export type Database = {
           id?: string
           subject_id: string
           updated_at?: string
+          weightage?: number
         }
         Update: {
           completed?: boolean
@@ -145,6 +147,7 @@ export type Database = {
           id?: string
           subject_id?: string
           updated_at?: string
+          weightage?: number
         }
         Relationships: [
           {
