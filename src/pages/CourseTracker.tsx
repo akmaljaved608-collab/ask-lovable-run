@@ -412,16 +412,26 @@ const CourseTracker: React.FC = () => {
     return course.subjects.map(subject => {
       let completed = 0;
       let total = subject.syllabusChecklist.length;
-      
+      let weightageDone = 0;
+      let weightageTotal = 0;
+
       subject.syllabusChecklist.forEach(item => {
-        if (item.completed) completed++;
+        weightageTotal += item.weightage;
+        if (item.completed) {
+          completed++;
+          weightageDone += item.weightage;
+        }
       });
 
       return {
         name: subject.name,
-        value: total > 0 ? (completed / total) * 100 : 0,
+        value: weightageTotal > 0
+          ? (weightageDone / weightageTotal) * 100
+          : (total > 0 ? (completed / total) * 100 : 0),
         completed,
-        total
+        total,
+        weightageDone,
+        weightageTotal
       };
     });
   };
