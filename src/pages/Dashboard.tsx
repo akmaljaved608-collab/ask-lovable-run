@@ -419,7 +419,9 @@ export default function Dashboard() {
               <div>
                 <CardTitle className="text-2xl">Overall Progress</CardTitle>
                 <CardDescription className="text-base">
-                  {totalCompleted} of {totalItems} syllabus items completed across {courses.length} courses
+                  {totalWeightage > 0
+                    ? `${Math.round(completedWeightage * 10) / 10}% of ${Math.round(totalWeightage * 10) / 10}% total exam weightage completed • ${totalCompleted} of ${totalItems} items`
+                    : `${totalCompleted} of ${totalItems} syllabus items completed across ${courses.length} courses`}
                 </CardDescription>
               </div>
             </div>
@@ -460,8 +462,13 @@ export default function Dashboard() {
           />
           <StatCard
             icon={Target}
-            label="Completed"
-            value={totalCompleted}
+            label="Weightage Done"
+            value={totalWeightage > 0 ? `${Math.round((completedWeightage / totalWeightage) * 100)}%` : totalCompleted}
+            subtext={
+              totalWeightage > 0
+                ? `${Math.round(completedWeightage * 10) / 10}/${Math.round(totalWeightage * 10) / 10}% weight • ${totalCompleted} items`
+                : "items completed"
+            }
             color="text-accent"
             bg="bg-accent/10"
           />
