@@ -1061,6 +1061,9 @@ const CourseTracker: React.FC = () => {
                           <span className={`flex-1 ${item.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                             {item.content}
                           </span>
+                          <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
+                            {item.weightage}%
+                          </span>
                           {item.dateCompleted && (
                             <span className="text-xs text-muted-foreground">
                               {new Date(item.dateCompleted).toLocaleDateString()}
