@@ -346,13 +346,17 @@ const CourseTracker: React.FC = () => {
     let completedToday = 0;
     let totalCompleted = 0;
     let totalItems = 0;
+    let weightageDone = 0;
+    let weightageTotal = 0;
 
     courses.forEach(course => {
       course.subjects.forEach(subject => {
         subject.syllabusChecklist.forEach(item => {
           totalItems++;
+          weightageTotal += item.weightage || 0;
           if (item.completed) {
             totalCompleted++;
+            weightageDone += item.weightage || 0;
             if (item.dateCompleted && item.dateCompleted.split('T')[0] === today) {
               completedToday++;
             }
@@ -361,7 +365,7 @@ const CourseTracker: React.FC = () => {
       });
     });
 
-    return { completedToday, totalCompleted, totalItems };
+    return { completedToday, totalCompleted, totalItems, weightageDone, weightageTotal };
   };
 
   const getCourseProgress = (courseId: string) => {
@@ -384,9 +388,11 @@ const CourseTracker: React.FC = () => {
       });
     });
 
-    return { 
-      completed, 
-      total, 
+    return {
+      completed,
+      total,
+      weightageDone,
+      weightageTotal,
       percentage: weightageTotal > 0
         ? (weightageDone / weightageTotal) * 100
         : (total > 0 ? (completed / total) * 100 : 0)
