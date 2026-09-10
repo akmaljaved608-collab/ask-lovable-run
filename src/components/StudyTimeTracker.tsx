@@ -14,8 +14,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Clock, Plus, Timer, Trash2 } from "lucide-react";
-import { format, parseISO, subDays } from "date-fns";
+import { Clock, Download, FileText, Plus, Target, Timer, Trash2 } from "lucide-react";
+import {
+  eachDayOfInterval,
+  format,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+  subDays,
+  subMonths,
+} from "date-fns";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip as ChartTooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SubjectOption {
   id: string;
