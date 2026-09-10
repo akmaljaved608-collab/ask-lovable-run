@@ -187,6 +187,8 @@ export default function Dashboard() {
       setTotalSubjects(subjectsCount);
       setTotalItems(itemsCount);
       setTotalCompleted(completedCount);
+      setTotalWeightage(weightageTotalSum);
+      setCompletedWeightage(weightageCompletedSum);
       setCourses(courseSummaries);
       setRecentActivity(
         recent.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10)
@@ -294,7 +296,13 @@ export default function Dashboard() {
     }
   };
 
-  const overallProgress = totalItems > 0 ? (totalCompleted / totalItems) * 100 : 0;
+  // Weightage-based overall progress; fall back to item count when no weightage is set
+  const overallProgress =
+    totalWeightage > 0
+      ? (completedWeightage / totalWeightage) * 100
+      : totalItems > 0
+        ? (totalCompleted / totalItems) * 100
+        : 0;
   const achievements = useMemo(
     () => getAchievementsForExport(streak, totalCompleted, activeDays),
     [streak, totalCompleted, activeDays]
