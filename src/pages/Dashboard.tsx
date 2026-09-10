@@ -45,6 +45,8 @@ interface CourseSummary {
   subjectCount: number;
   totalItems: number;
   completedItems: number;
+  totalWeightage: number;
+  completedWeightage: number;
   percentage: number;
 }
 
@@ -68,6 +70,8 @@ export default function Dashboard() {
   const [totalSubjects, setTotalSubjects] = useState(0);
   const [totalCompleted, setTotalCompleted] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
+  const [totalWeightage, setTotalWeightage] = useState(0);
+  const [completedWeightage, setCompletedWeightage] = useState(0);
   const [streak, setStreak] = useState(0);
   const [activeDays, setActiveDays] = useState(0);
   const [testsPassed, setTestsPassed] = useState(0);
