@@ -45,6 +45,8 @@ interface CourseSummary {
   subjectCount: number;
   totalItems: number;
   completedItems: number;
+  totalWeightage: number;
+  completedWeightage: number;
   percentage: number;
 }
 
@@ -68,6 +70,8 @@ export default function Dashboard() {
   const [totalSubjects, setTotalSubjects] = useState(0);
   const [totalCompleted, setTotalCompleted] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
+  const [totalWeightage, setTotalWeightage] = useState(0);
+  const [completedWeightage, setCompletedWeightage] = useState(0);
   const [streak, setStreak] = useState(0);
   const [activeDays, setActiveDays] = useState(0);
   const [testsPassed, setTestsPassed] = useState(0);
@@ -119,9 +123,14 @@ export default function Dashboard() {
       const completedDates: string[] = [];
       const recent: RecentActivity[] = [];
 
+      let weightageTotalSum = 0;
+      let weightageCompletedSum = 0;
+
       coursesData?.forEach((course: any) => {
         let courseTotal = 0;
         let courseCompleted = 0;
+        let courseWeightageTotal = 0;
+        let courseWeightageCompleted = 0;
         const subjectList = course.subjects || [];
         subjectsCount += subjectList.length;
 
@@ -130,10 +139,13 @@ export default function Dashboard() {
           itemsCount += items.length;
 
           items.forEach((item: any) => {
+            const weight = Number(item.weightage) || 0;
             courseTotal++;
+            courseWeightageTotal += weight;
             if (item.completed) {
               courseCompleted++;
               completedCount++;
+              courseWeightageCompleted += weight;
               if (item.date_completed) {
                 completedDates.push(item.date_completed);
                 recent.push({
@@ -148,6 +160,17 @@ export default function Dashboard() {
           });
         });
 
+        weightageTotalSum += courseWeightageTotal;
+        weightageCompletedSum += courseWeightageCompleted;
+
+        // Prefer weightage-based progress; fall back to item count for legacy data without weightage
+        const percentage =
+          courseWeightageTotal > 0
+            ? (courseWeightageCompleted / courseWeightageTotal) * 100
+            : courseTotal > 0
+              ? (courseCompleted / courseTotal) * 100
+              : 0;
+
         courseSummaries.push({
           id: course.id,
           name: course.name,
@@ -155,13 +178,17 @@ export default function Dashboard() {
           subjectCount: subjectList.length,
           totalItems: courseTotal,
           completedItems: courseCompleted,
-          percentage: courseTotal > 0 ? (courseCompleted / courseTotal) * 100 : 0,
+          totalWeightage: courseWeightageTotal,
+          completedWeightage: courseWeightageCompleted,
+          percentage,
         });
       });
 
       setTotalSubjects(subjectsCount);
       setTotalItems(itemsCount);
       setTotalCompleted(completedCount);
+      setTotalWeightage(weightageTotalSum);
+      setCompletedWeightage(weightageCompletedSum);
       setCourses(courseSummaries);
       setRecentActivity(
         recent.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10)
@@ -269,7 +296,13 @@ export default function Dashboard() {
     }
   };
 
-  const overallProgress = totalItems > 0 ? (totalCompleted / totalItems) * 100 : 0;
+  // Weightage-based overall progress; fall back to item count when no weightage is set
+  const overallProgress =
+    totalWeightage > 0
+      ? (completedWeightage / totalWeightage) * 100
+      : totalItems > 0
+        ? (totalCompleted / totalItems) * 100
+        : 0;
   const achievements = useMemo(
     () => getAchievementsForExport(streak, totalCompleted, activeDays),
     [streak, totalCompleted, activeDays]
@@ -386,7 +419,9 @@ export default function Dashboard() {
               <div>
                 <CardTitle className="text-2xl">Overall Progress</CardTitle>
                 <CardDescription className="text-base">
-                  {totalCompleted} of {totalItems} syllabus items completed across {courses.length} courses
+                  {totalWeightage > 0
+                    ? `${Math.round(completedWeightage * 10) / 10}% of ${Math.round(totalWeightage * 10) / 10}% total exam weightage completed • ${totalCompleted} of ${totalItems} items`
+                    : `${totalCompleted} of ${totalItems} syllabus items completed across ${courses.length} courses`}
                 </CardDescription>
               </div>
             </div>
@@ -427,8 +462,13 @@ export default function Dashboard() {
           />
           <StatCard
             icon={Target}
-            label="Completed"
-            value={totalCompleted}
+            label="Weightage Done"
+            value={totalWeightage > 0 ? `${Math.round((completedWeightage / totalWeightage) * 100)}%` : totalCompleted}
+            subtext={
+              totalWeightage > 0
+                ? `${Math.round(completedWeightage * 10) / 10}/${Math.round(totalWeightage * 10) / 10}% weight • ${totalCompleted} items`
+                : "items completed"
+            }
             color="text-accent"
             bg="bg-accent/10"
           />
@@ -538,7 +578,9 @@ export default function Dashboard() {
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>
-                      {course.completedItems}/{course.totalItems} items
+                      {course.totalWeightage > 0
+                        ? `${Math.round(course.completedWeightage * 10) / 10}/${Math.round(course.totalWeightage * 10) / 10}% weight`
+                        : `${course.completedItems}/${course.totalItems} items`}
                     </span>
                     <span>{course.subjectCount} subjects</span>
                   </div>
