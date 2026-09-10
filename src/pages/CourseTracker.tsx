@@ -572,6 +572,10 @@ const CourseTracker: React.FC = () => {
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/reports')}>
                     <BarChart3 className="mr-2 h-4 w-4" />
                     Reports
