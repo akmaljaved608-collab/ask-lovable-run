@@ -412,6 +412,116 @@ ul{font-size:13px;font-family:Arial,sans-serif}</style></head><body>
               </Button>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-lg border border-border/70 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Target className="h-4 w-4 text-primary" />
+                  Daily goal
+                </div>
+                <Progress value={dailyPct} className="h-2" />
+                <p className="text-xs text-muted-foreground">
+                  {formatMinutes(totals.todayMinutes)} of {formatMinutes(dailyGoal)} ({Math.round(dailyPct)}%)
+                </p>
+              </div>
+              <div className="rounded-lg border border-border/70 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Target className="h-4 w-4 text-primary" />
+                  Weekly goal
+                </div>
+                <Progress value={weeklyPct} className="h-2" />
+                <p className="text-xs text-muted-foreground">
+                  {formatMinutes(totals.weekMinutes)} of {formatMinutes(weeklyGoal)} ({Math.round(weeklyPct)}%)
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+              <div className="space-y-1.5">
+                <Label>Daily goal (minutes)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={dailyGoalInput}
+                  onChange={(e) => setDailyGoalInput(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Weekly goal (minutes)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={weeklyGoalInput}
+                  onChange={(e) => setWeeklyGoalInput(e.target.value)}
+                />
+              </div>
+              <Button variant="secondary" onClick={handleSaveGoals} disabled={savingGoals}>
+                {savingGoals ? "Saving..." : "Save goals"}
+              </Button>
+            </div>
+
+            <Tabs defaultValue="weekly" className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <TabsList>
+                  <TabsTrigger value="weekly">Last 7 days</TabsTrigger>
+                  <TabsTrigger value="monthly">Last 4 weeks</TabsTrigger>
+                </TabsList>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={exportCsv}>
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={exportPdf}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              </div>
+              <TabsContent value="weekly" className="mt-0">
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={weeklyChart}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
+                      <YAxis tickLine={false} axisLine={false} fontSize={12} unit="h" />
+                      <ChartTooltip formatter={(value: any) => [`${value} h`, "Studied"]} />
+                      <Bar dataKey="hours" radius={[6, 6, 0, 0]}>
+                        {weeklyChart.map((entry, index) => (
+                          <Cell
+                            key={index}
+                            fill={entry.metGoal ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))"}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+              <TabsContent value="monthly" className="mt-0">
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlyChart}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
+                      <YAxis tickLine={false} axisLine={false} fontSize={12} unit="h" />
+                      <ChartTooltip formatter={(value: any) => [`${value} h`, "Studied"]} />
+                      <Bar dataKey="hours" radius={[6, 6, 0, 0]}>
+                        {monthlyChart.map((entry, index) => (
+                          <Cell
+                            key={index}
+                            fill={entry.metGoal ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))"}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  This month {formatMinutes(monthTotals.thisMonth)} · last month {formatMinutes(monthTotals.lastMonth)}
+                </p>
+              </TabsContent>
+            </Tabs>
+
+
             {totals.bySubject.length > 0 && (
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
