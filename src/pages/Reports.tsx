@@ -445,10 +445,6 @@ export default function Reports() {
             <p className="text-muted-foreground">Track your learning progress over time</p>
           </div>
           <div className="flex items-center gap-4">
-            <Button onClick={() => navigate('/dashboard')} variant="outline">
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              Dashboard
-            </Button>
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger className="w-40">
                 <SelectValue />
