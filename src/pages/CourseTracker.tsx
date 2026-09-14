@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { EditCourseDialog } from "@/components/EditCourseDialog";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { ProgressCalendar } from "@/components/ProgressCalendar";
@@ -58,7 +58,13 @@ const CourseTracker: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [syllabusText, setSyllabusText] = useState('');
   const [pendingItems, setPendingItems] = useState<{ content: string; weightage: string }[]>([]);
-  const [activeTab, setActiveTab] = useState('courses');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    ['courses', 'subjects', 'syllabus', 'tests', 'progress'].includes(requestedTab ?? '')
+      ? requestedTab ?? 'courses'
+      : 'courses'
+  );
   const [viewMode, setViewMode] = useState<'overview' | 'course-detail'>('overview');
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -68,7 +74,15 @@ const CourseTracker: React.FC = () => {
 
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
+
+  useEffect(() => {
+    const nextTab = searchParams.get('tab');
+    if (nextTab && ['courses', 'subjects', 'syllabus', 'tests', 'progress'].includes(nextTab)) {
+      setActiveTab(nextTab);
+      setViewMode('overview');
+      setSelectedCourseForDetail(null);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (user) {
@@ -576,69 +590,7 @@ const CourseTracker: React.FC = () => {
                 </h1>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center gap-2"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/reports')}
-                className="flex items-center gap-2"
-              >
-                <FileText className="h-4 w-4" />
-                Reports
-              </Button>
-              <ThemeToggle />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={userProfile?.avatar_url} alt={userProfile?.display_name} />
-                      <AvatarFallback>
-                        {userProfile?.display_name?.charAt(0) || user?.email?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {userProfile?.display_name || "User"}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user?.email}
-                      </p>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/settings')}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/reports')}>
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    Reports
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <Badge variant="outline">{userProfile?.display_name || user?.email}</Badge>
           </div>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
             A quiet, considered record of everything you are learning — syllabus, streaks, tests and results in one place.
@@ -679,35 +631,6 @@ const CourseTracker: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Navigation Tabs */}
-        <div className="flex flex-wrap gap-3 mb-8 p-1 bg-muted/50 rounded-2xl">
-          {[
-            { key: 'courses', icon: BookOpen, label: 'Courses' },
-            { key: 'subjects', icon: Target, label: 'Subjects' },
-            { key: 'syllabus', icon: Clock, label: 'Syllabus' },
-            { key: 'tests', icon: ClipboardList, label: 'Tests' },
-            { key: 'progress', icon: TrendingUp, label: 'Analytics' }
-          ].map(({ key, icon: Icon, label }) => (
-            <Button
-              key={key}
-              variant={activeTab === key ? 'default' : 'ghost'}
-              onClick={() => {
-                setActiveTab(key);
-                setViewMode('overview');
-                setSelectedCourseForDetail(null);
-              }}
-              className={`flex-1 min-w-fit gap-2 h-12 rounded-xl transition-all duration-300 ${
-                activeTab === key 
-                  ? 'hero-gradient text-primary-foreground shadow-glow' 
-                  : 'hover:bg-background/80'
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </Button>
-          ))}
-        </div>
 
         {/* Courses Tab */}
         {activeTab === 'courses' && (
