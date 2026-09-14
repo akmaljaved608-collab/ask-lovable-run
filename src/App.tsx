@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import AuthGuard from "@/components/AuthGuard";
@@ -12,6 +12,7 @@ import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import { AppShell } from "@/components/AppShell";
 
 const queryClient = new QueryClient();
 
@@ -25,26 +26,13 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={
-                <AuthGuard>
-                  <Index />
-                </AuthGuard>
-              } />
-              <Route path="/settings" element={
-                <AuthGuard>
-                  <Settings />
-                </AuthGuard>
-              } />
-              <Route path="/reports" element={
-                <AuthGuard>
-                  <Reports />
-                </AuthGuard>
-              } />
-              <Route path="/dashboard" element={
-                <AuthGuard>
-                  <Dashboard />
-                </AuthGuard>
-              } />
+              <Route element={<AuthGuard><AppShell /></AuthGuard>}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Navigate to="/" replace />} />
+                <Route path="/courses" element={<Index />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/reports" element={<Reports />} />
+              </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
