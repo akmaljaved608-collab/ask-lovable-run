@@ -100,9 +100,9 @@ export default function Dashboard() {
   const overallProgress = percent(allItems);
 
   const activeDates = useMemo(
-    () => Array.from(new Set(completedItems.filter((item) => item.date_completed).map((item) => startOfDay(new Date(item.date_completed ?? "")).toISOString())))
+    () => Array.from(new Set(studyDates.map((date) => startOfDay(new Date(`${date}T00:00:00`)).toISOString())))
       .map((date) => new Date(date)).sort((a, b) => b.getTime() - a.getTime()),
-    [completedItems]
+    [studyDates]
   );
 
   const streak = useMemo(() => {
