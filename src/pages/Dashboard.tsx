@@ -46,6 +46,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState<CourseData[]>([]);
+  const [studyDates, setStudyDates] = useState<string[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
 
@@ -53,16 +54,22 @@ export default function Dashboard() {
     if (!user) return;
     const fetchData = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("courses")
-        .select("id, name, description, subjects(id, name, syllabus_items(id, content, completed, weightage, date_completed))")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      const [coursesResult, sessionsResult] = await Promise.all([
+        supabase
+          .from("courses")
+          .select("id, name, description, subjects(id, name, syllabus_items(id, content, completed, weightage, date_completed))")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("study_sessions")
+          .select("studied_on")
+          .eq("user_id", user.id),
+      ]);
 
-      if (error) {
+      if (coursesResult.error) {
         toast({ title: "Could not load progress", description: "Please refresh and try again.", variant: "destructive" });
       } else {
-        const nextCourses = (data ?? []) as CourseData[];
+        const nextCourses = (coursesResult.data ?? []) as CourseData[];
         setCourses(nextCourses);
         const firstCourse = nextCourses[0];
         if (firstCourse) {
@@ -70,6 +77,7 @@ export default function Dashboard() {
           setSelectedSubjectId((current) => current || firstCourse.subjects[0]?.id || "");
         }
       }
+      setStudyDates(((sessionsResult.data ?? []) as { studied_on: string }[]).map((row) => row.studied_on));
       setLoading(false);
     };
     fetchData();
@@ -92,9 +100,9 @@ export default function Dashboard() {
   const overallProgress = percent(allItems);
 
   const activeDates = useMemo(
-    () => Array.from(new Set(completedItems.filter((item) => item.date_completed).map((item) => startOfDay(new Date(item.date_completed ?? "")).toISOString())))
+    () => Array.from(new Set(studyDates.map((date) => startOfDay(new Date(`${date}T00:00:00`)).toISOString())))
       .map((date) => new Date(date)).sort((a, b) => b.getTime() - a.getTime()),
-    [completedItems]
+    [studyDates]
   );
 
   const streak = useMemo(() => {
