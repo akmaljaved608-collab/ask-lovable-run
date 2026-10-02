@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import CountdownTimers from "@/components/CountdownTimers";
 
 interface SyllabusItem {
   id: string;
@@ -140,6 +141,8 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </section>
+
+        <CountdownTimers />
 
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)]">
           <Card className="border-border/70 shadow-card">
