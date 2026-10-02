@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { format, isSameDay, startOfDay, subDays } from "date-fns";
+import { format } from "date-fns";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { BookOpen, CalendarDays, CheckCircle2, ChevronRight, Flame, ListTodo, Target } from "lucide-react";
+import { BookOpen, CheckCircle2, ChevronRight, ListTodo, Target } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { StudyTimeTracker } from "@/components/StudyTimeTracker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +45,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState<CourseData[]>([]);
-  const [studyDates, setStudyDates] = useState<string[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
 
@@ -54,17 +52,11 @@ export default function Dashboard() {
     if (!user) return;
     const fetchData = async () => {
       setLoading(true);
-      const [coursesResult, sessionsResult] = await Promise.all([
-        supabase
-          .from("courses")
-          .select("id, name, description, subjects(id, name, syllabus_items(id, content, completed, weightage, date_completed))")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("study_sessions")
-          .select("studied_on")
-          .eq("user_id", user.id),
-      ]);
+      const coursesResult = await supabase
+        .from("courses")
+        .select("id, name, description, subjects(id, name, syllabus_items(id, content, completed, weightage, date_completed))")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (coursesResult.error) {
         toast({ title: "Could not load progress", description: "Please refresh and try again.", variant: "destructive" });
@@ -77,7 +69,6 @@ export default function Dashboard() {
           setSelectedSubjectId((current) => current || firstCourse.subjects[0]?.id || "");
         }
       }
-      setStudyDates(((sessionsResult.data ?? []) as { studied_on: string }[]).map((row) => row.studied_on));
       setLoading(false);
     };
     fetchData();
@@ -99,26 +90,6 @@ export default function Dashboard() {
   const completedWeight = completedItems.reduce((sum, item) => sum + (Number(item.weightage) || 0), 0);
   const overallProgress = percent(allItems);
 
-  const activeDates = useMemo(
-    () => Array.from(new Set(studyDates.map((date) => startOfDay(new Date(`${date}T00:00:00`)).toISOString())))
-      .map((date) => new Date(date)).sort((a, b) => b.getTime() - a.getTime()),
-    [studyDates]
-  );
-
-  const streak = useMemo(() => {
-    if (!activeDates.length) return 0;
-    const today = startOfDay(new Date());
-    let cursor = startOfDay(activeDates[0]);
-    if (!isSameDay(cursor, today) && !isSameDay(cursor, subDays(today, 1))) return 0;
-    let count = 1;
-    for (let index = 1; index < activeDates.length; index += 1) {
-      const next = startOfDay(activeDates[index]);
-      if (!isSameDay(next, subDays(cursor, 1))) break;
-      count += 1;
-      cursor = next;
-    }
-    return count;
-  }, [activeDates]);
 
   const tasks = useMemo(() => courses.flatMap((course) => course.subjects.flatMap((subject) =>
     subject.syllabus_items.filter((item) => !item.completed).map((item) => ({ ...item, courseName: course.name, subjectName: subject.name }))
@@ -151,8 +122,8 @@ export default function Dashboard() {
           </Button>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          <Card className="border-border/70 shadow-card md:col-span-2">
+        <section className="grid gap-4">
+          <Card className="border-border/70 shadow-card">
             <CardContent className="flex h-full flex-col justify-between gap-6 p-6 md:flex-row md:items-end">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Overall completion</p>
@@ -166,12 +137,6 @@ export default function Dashboard() {
                 <div><p className="text-2xl font-semibold">{allSubjects.length}</p><p className="text-xs text-muted-foreground">Subjects</p></div>
                 <div><p className="text-2xl font-semibold">{completedItems.length}</p><p className="text-xs text-muted-foreground">Done</p></div>
               </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border/70 bg-accent/10 shadow-card">
-            <CardContent className="flex h-full items-center gap-5 p-6">
-              <div className="rounded-md bg-accent/15 p-3"><Flame className="size-7 text-accent" /></div>
-              <div><p className="text-4xl font-semibold">{streak}</p><p className="text-sm text-muted-foreground">day learning streak</p></div>
             </CardContent>
           </Card>
         </section>
@@ -221,7 +186,6 @@ export default function Dashboard() {
           })}</div> : <Card><CardContent className="py-12 text-center"><BookOpen className="mx-auto mb-3 size-10 text-muted-foreground" /><p className="mb-4 text-muted-foreground">Create your first course to begin tracking progress.</p><Button onClick={() => navigate("/courses?tab=courses")}>Create a course</Button></CardContent></Card>}
         </section>
 
-        <section><StudyTimeTracker userId={user?.id ?? ""} /></section>
       </div>
     </main>
   );
