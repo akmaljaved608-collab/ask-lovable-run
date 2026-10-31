@@ -61,14 +61,14 @@ All colors MUST be HSL.
 
     --radius: 1rem;
 
-    --sidebar-background: 195 34% 97%;
-    --sidebar-foreground: 205 20% 30%;
-    --sidebar-primary: 190 62% 32%;
-    --sidebar-primary-foreground: 0 0% 99%;
-    --sidebar-accent: 200 24% 93%;
-    --sidebar-accent-foreground: 205 28% 18%;
-    --sidebar-border: 200 22% 90%;
-    --sidebar-ring: 190 62% 40%;
+    --sidebar-background: var(--muted);
+    --sidebar-foreground: var(--muted-foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--muted);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
   }
 
   .dark {
@@ -116,14 +116,14 @@ All colors MUST be HSL.
     --shadow-elevated: 0 2px 6px hsl(0 0% 0% / 0.5), 0 20px 44px -20px hsl(0 0% 0% / 0.7);
     --shadow-glow: 0 0 0 1px hsl(186 62% 58% / 0.2), 0 14px 36px -16px hsl(186 62% 58% / 0.4);
 
-    --sidebar-background: 205 30% 10%;
-    --sidebar-foreground: 195 20% 88%;
-    --sidebar-primary: 186 62% 58%;
-    --sidebar-primary-foreground: 205 30% 8%;
-    --sidebar-accent: 205 22% 16%;
-    --sidebar-accent-foreground: 195 25% 95%;
-    --sidebar-border: 205 20% 19%;
-    --sidebar-ring: 186 62% 58%;
+    --sidebar-background: var(--muted);
+    --sidebar-foreground: var(--muted-foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--muted);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
   }
 }
 
