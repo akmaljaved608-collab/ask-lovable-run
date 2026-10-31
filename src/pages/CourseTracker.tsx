@@ -26,6 +26,7 @@ import { EditCourseDialog } from "@/components/EditCourseDialog";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { ProgressCalendar } from "@/components/ProgressCalendar";
 import { TestSeriesSection } from "@/components/TestSeriesSection";
+import { CelebrationDialog, type CelebrationLevel } from "@/components/CelebrationDialog";
 
 interface Subject {
   id: string;
