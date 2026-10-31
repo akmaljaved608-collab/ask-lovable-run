@@ -227,4 +227,27 @@ All colors MUST be HSL.
   .float-animation {
     animation: float 6s ease-in-out infinite;
   }
+
+  /* Celebration dialog */
+  @keyframes confetti-fall {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translateY(90px) rotate(220deg); opacity: 0; }
+  }
+
+  .celebration-confetti {
+    position: absolute;
+    top: 0;
+    animation: confetti-fall 1.4s ease-in forwards;
+  }
+
+  @keyframes celebration-pop {
+    0% { transform: scale(0.4); }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  .celebration-pop {
+    animation: celebration-pop 0.5s var(--animation-smooth);
+  }
 }
