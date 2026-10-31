@@ -26,6 +26,7 @@ import { EditCourseDialog } from "@/components/EditCourseDialog";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { ProgressCalendar } from "@/components/ProgressCalendar";
 import { TestSeriesSection } from "@/components/TestSeriesSection";
+import { CelebrationDialog, type CelebrationLevel } from "@/components/CelebrationDialog";
 
 interface Subject {
   id: string;
@@ -58,6 +59,7 @@ const CourseTracker: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [syllabusText, setSyllabusText] = useState('');
   const [pendingItems, setPendingItems] = useState<{ content: string; weightage: string }[]>([]);
+  const [celebration, setCelebration] = useState<{ level: CelebrationLevel; name: string } | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(
@@ -325,7 +327,7 @@ const CourseTracker: React.FC = () => {
       const subject = course?.subjects.find(s => s.id === subjectId);
       const item = subject?.syllabusChecklist.find(i => i.id === itemId);
       
-      if (!item) return;
+      if (!course || !subject || !item) return;
 
       const newCompleted = !item.completed;
       const { error } = await supabase
@@ -341,10 +343,20 @@ const CourseTracker: React.FC = () => {
       await loadCourses();
       
       if (newCompleted) {
-        toast({
-          title: "Great progress!",
-          description: "Item marked as completed.",
-        });
+        const remainingInSubject = subject.syllabusChecklist.filter(i => i.id !== itemId && !i.completed).length;
+        if (remainingInSubject === 0) {
+          const remainingInCourse = course.subjects
+            .filter(s => s.id !== subjectId)
+            .flatMap(s => s.syllabusChecklist)
+            .filter(i => !i.completed).length;
+          if (remainingInCourse === 0) {
+            setCelebration({ level: 'course', name: course.name });
+          } else {
+            setCelebration({ level: 'subject', name: subject.name });
+          }
+        } else {
+          setCelebration({ level: 'topic', name: item.content });
+        }
       }
     } catch (error: any) {
       toast({
@@ -1286,6 +1298,9 @@ const CourseTracker: React.FC = () => {
         onOpenChange={(open) => !open && setEditingCourse(null)}
         onUpdate={loadCourses}
       />
+
+      {/* Completion celebration */}
+      <CelebrationDialog celebration={celebration} onClose={() => setCelebration(null)} />
 
       {/* Onboarding Tutorial */}
       {showTutorial && (
