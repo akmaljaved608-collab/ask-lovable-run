@@ -1299,6 +1299,9 @@ const CourseTracker: React.FC = () => {
         onUpdate={loadCourses}
       />
 
+      {/* Completion celebration */}
+      <CelebrationDialog celebration={celebration} onClose={() => setCelebration(null)} />
+
       {/* Onboarding Tutorial */}
       {showTutorial && (
         <OnboardingTutorial onComplete={() => setShowTutorial(false)} />
