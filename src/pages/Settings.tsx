@@ -13,6 +13,9 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "next-themes";
 import { Download, Save, User, Palette, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme as useThemePack } from "@/providers/ThemeProvider";
+import { THEME_PACKS } from "@/lib/themePacks";
+import { Check } from "lucide-react";
 
 interface Profile {
   display_name: string;
@@ -27,6 +30,7 @@ export default function Settings() {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const { themePack, setThemePack } = useThemePack();
   const [profile, setProfile] = useState<Profile>({
     display_name: "",
     avatar_url: "",
@@ -247,6 +251,37 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="appearance" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Themes</CardTitle>
+                <CardDescription>Pick a look for the whole app. It applies instantly and works in light and dark mode.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {THEME_PACKS.map((pack) => {
+                    const active = themePack === pack.id;
+                    return (
+                      <button
+                        key={pack.id}
+                        type="button"
+                        onClick={() => setThemePack(pack.id)}
+                        aria-pressed={active}
+                        className={`relative rounded-xl border p-4 text-left transition-all hover:shadow-card ${active ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
+                      >
+                        <div className="mb-3 flex gap-1.5">
+                          {pack.swatches.map((c) => (
+                            <span key={c} className="size-6 rounded-full border border-border" style={{ backgroundColor: c }} />
+                          ))}
+                        </div>
+                        <p className="font-medium">{pack.label}</p>
+                        <p className="text-xs text-muted-foreground">{pack.description}</p>
+                        {active && <Check className="absolute right-3 top-3 size-4 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
             <Card>
               <CardHeader>
                 <CardTitle>Theme Preferences</CardTitle>
