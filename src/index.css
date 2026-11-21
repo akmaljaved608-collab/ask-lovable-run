@@ -501,4 +501,76 @@ All colors MUST be HSL.
   .celebration-pop {
     animation: celebration-pop 0.5s var(--animation-smooth);
   }
+
+  /* The overview follows each selected theme without changing its content. */
+  .progress-sheet__heading {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .progress-sheet__overview-card {
+    background-image: linear-gradient(110deg, hsl(var(--primary) / 0.07), transparent 62%);
+  }
+
+  .progress-sheet__section-card {
+    background-image: linear-gradient(155deg, hsl(var(--accent) / 0.025), transparent 55%);
+  }
+
+  [data-theme-pack="halloween"] .progress-sheet__overview-card {
+    background-image: linear-gradient(125deg, hsl(var(--primary) / 0.12), transparent 55%), repeating-linear-gradient(135deg, transparent 0 18px, hsl(var(--accent) / 0.035) 18px 19px);
+    border-top-color: hsl(var(--accent) / 0.75);
+  }
+
+  [data-theme-pack="christmas"] .progress-sheet__overview-card {
+    background-image: linear-gradient(150deg, hsl(var(--secondary) / 0.08), transparent 58%), repeating-linear-gradient(45deg, transparent 0 20px, hsl(var(--primary) / 0.035) 20px 21px);
+    border-top-color: hsl(var(--secondary) / 0.75);
+  }
+
+  [data-theme-pack="newyear"] .progress-sheet__overview-card {
+    background-image: repeating-conic-gradient(from 0deg at 100% 0%, hsl(var(--secondary) / 0.08) 0deg 1deg, transparent 1deg 15deg), linear-gradient(135deg, hsl(var(--primary) / 0.08), transparent 62%);
+    border-top-color: hsl(var(--secondary) / 0.75);
+  }
+
+  [data-theme-pack="minimal"] .progress-sheet__overview-card,
+  [data-theme-pack="minimal"] .progress-sheet__section-card {
+    background-image: none;
+    box-shadow: none;
+  }
+
+  [data-theme-pack="cute"] .progress-sheet__overview-card {
+    background-image: linear-gradient(115deg, hsl(var(--primary) / 0.09), transparent 48%), linear-gradient(300deg, hsl(var(--accent) / 0.08), transparent 45%);
+    border-top-color: hsl(var(--primary) / 0.7);
+  }
+
+  [data-theme-pack="abstract"] .progress-sheet__overview-card {
+    background-image: linear-gradient(125deg, hsl(var(--primary) / 0.11) 0 22%, transparent 22% 100%), linear-gradient(305deg, hsl(var(--accent) / 0.09) 0 18%, transparent 18% 100%);
+    border-top-color: hsl(var(--accent) / 0.8);
+  }
+
+  [data-theme-pack="tech"] .progress-sheet__overview-card {
+    background-image: linear-gradient(hsl(var(--primary) / 0.04) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary) / 0.04) 1px, transparent 1px), linear-gradient(135deg, hsl(var(--accent) / 0.07), transparent 62%);
+    background-size: 22px 22px, 22px 22px, auto;
+    border-top-color: hsl(var(--primary) / 0.8);
+  }
+
+  [data-theme-pack="nature"] .progress-sheet__overview-card {
+    background-image: linear-gradient(140deg, hsl(var(--secondary) / 0.1), transparent 58%), repeating-linear-gradient(155deg, transparent 0 24px, hsl(var(--primary) / 0.035) 24px 25px);
+    border-top-color: hsl(var(--secondary) / 0.75);
+  }
+
+  [data-theme-pack="halloween"] .progress-sheet__section-card,
+  [data-theme-pack="christmas"] .progress-sheet__section-card,
+  [data-theme-pack="newyear"] .progress-sheet__section-card,
+  [data-theme-pack="cute"] .progress-sheet__section-card,
+  [data-theme-pack="abstract"] .progress-sheet__section-card,
+  [data-theme-pack="tech"] .progress-sheet__section-card,
+  [data-theme-pack="nature"] .progress-sheet__section-card {
+    border-top-color: hsl(var(--primary) / 0.45);
+  }
+
+  @media (max-width: 639px) {
+    .progress-sheet__heading {
+      padding-bottom: 0.25rem;
+    }
+  }
 }

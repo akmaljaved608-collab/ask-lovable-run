@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CountdownTimers from "@/components/CountdownTimers";
 
@@ -39,6 +40,8 @@ const percent = (items: SyllabusItem[]) => {
   if (totalWeight > 0) return (doneWeight / totalWeight) * 100;
   return items.length > 0 ? (items.filter((item) => item.completed).length / items.length) * 100 : 0;
 };
+
+const formatWeight = (value: number) => Number.isInteger(value) ? String(value) : value.toFixed(1);
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -110,85 +113,145 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="w-full bg-background">
-      <div className="mx-auto max-w-7xl space-y-8 p-4 md:p-8">
-        <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-          <div>
-            <span className="eyebrow">Today · {format(new Date(), "EEEE, MMMM d")}</span>
-            <h1 className="mt-2 text-4xl md:text-5xl">Progress Sheet</h1>
-            <p className="mt-2 max-w-2xl text-muted-foreground">Focus on the work that matters most and keep your learning rhythm moving.</p>
+    <main className="progress-sheet w-full bg-background">
+      <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-8">
+        <header className="progress-sheet__heading flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div className="min-w-0">
+            <span className="eyebrow">Study overview · {format(new Date(), "EEEE, MMMM d")}</span>
+            <h1 className="mt-2 text-4xl">Progress Sheet</h1>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Your learning progress, next topics and important dates.</p>
           </div>
-          <Button onClick={() => navigate("/courses?tab=syllabus")} className="hero-gradient text-primary-foreground">
+          <Button onClick={() => navigate("/courses?tab=syllabus")} className="shrink-0 hero-gradient text-primary-foreground">
             Open syllabus <ChevronRight className="ml-2 size-4" />
           </Button>
         </header>
 
-        <section className="grid gap-4">
-          <Card className="border-border/70 shadow-card">
-            <CardContent className="flex h-full flex-col justify-between gap-6 p-6 md:flex-row md:items-end">
-              <div>
+        <section aria-label="Overall progress">
+          <Card className="progress-sheet__overview-card overflow-hidden border-border/70 shadow-card">
+            <CardContent className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+              <div className="min-w-0">
                 <p className="text-sm font-medium text-muted-foreground">Overall completion</p>
-                <p className="mt-2 text-5xl font-semibold text-foreground">{Math.round(overallProgress)}%</p>
+                <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+                  <p className="text-5xl font-semibold tabular-nums text-foreground">{Math.round(overallProgress)}%</p>
+                  <span className="text-sm text-muted-foreground">complete</span>
+                </div>
+                <Progress value={overallProgress} aria-label="Overall completion" className="mt-3 h-2 bg-muted" />
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {totalWeight > 0 ? `${Math.round(completedWeight * 10) / 10} of ${Math.round(totalWeight * 10) / 10}% exam weightage` : `${completedItems.length} of ${allItems.length} topics`}
+                  {totalWeight > 0
+                    ? `${formatWeight(completedWeight)} of ${formatWeight(totalWeight)} total exam weightage completed`
+                    : `${completedItems.length} of ${allItems.length} topics completed`}
                 </p>
               </div>
-              <div className="grid grid-cols-3 gap-6 text-center">
-                <div><p className="text-2xl font-semibold">{courses.length}</p><p className="text-xs text-muted-foreground">Courses</p></div>
-                <div><p className="text-2xl font-semibold">{allSubjects.length}</p><p className="text-xs text-muted-foreground">Subjects</p></div>
-                <div><p className="text-2xl font-semibold">{completedItems.length}</p><p className="text-xs text-muted-foreground">Done</p></div>
+              <div className="grid grid-cols-3 divide-x divide-border border-t border-border pt-4 text-center lg:min-w-[270px] lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+                <div className="px-2"><p className="text-2xl font-semibold tabular-nums">{courses.length}</p><p className="mt-1 text-xs text-muted-foreground">Courses</p></div>
+                <div className="px-2"><p className="text-2xl font-semibold tabular-nums">{allSubjects.length}</p><p className="mt-1 text-xs text-muted-foreground">Subjects</p></div>
+                <div className="px-2"><p className="text-2xl font-semibold tabular-nums">{completedItems.length}</p><p className="mt-1 text-xs text-muted-foreground">Topics done</p></div>
               </div>
             </CardContent>
           </Card>
         </section>
 
-        <CountdownTimers />
+        <div className="progress-sheet__countdowns">
+          <CountdownTimers />
+        </div>
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)]">
-          <Card className="border-border/70 shadow-card">
-            <CardHeader>
-              <div className="flex items-center justify-between gap-3">
-                <div><CardTitle className="flex items-center gap-2"><ListTodo className="size-5 text-primary" /> Tasks for today</CardTitle><CardDescription>Highest-weightage unfinished topics first</CardDescription></div>
-                <Badge variant="secondary">{tasks.length} suggested</Badge>
+        <section aria-label="Study focus and subject progress" className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)]">
+          <Card className="progress-sheet__section-card border-border/70 shadow-card">
+            <CardHeader className="pb-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2"><ListTodo className="size-5 text-primary" />Today's focus</CardTitle>
+                  <CardDescription className="mt-1">Unfinished topics with the highest exam weightage.</CardDescription>
+                </div>
+                {tasks.length > 0 && <Badge variant="secondary">{tasks.length} topics</Badge>}
               </div>
             </CardHeader>
             <CardContent>
               {tasks.length ? <div className="divide-y divide-border">
-                {tasks.map((task, index) => <button key={task.id} onClick={() => navigate("/courses?tab=syllabus")} className="flex w-full items-center gap-4 py-4 text-left transition-colors hover:bg-muted/40">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-semibold">{index + 1}</span>
-                  <span className="min-w-0 flex-1"><span className="block truncate font-medium">{task.content}</span><span className="block truncate text-xs text-muted-foreground">{task.courseName} · {task.subjectName}</span></span>
-                  <Badge variant="outline">{Number(task.weightage) || 0}%</Badge>
-                </button>)}
-              </div> : <div className="py-12 text-center"><CheckCircle2 className="mx-auto mb-3 size-10 text-primary" /><p className="font-medium">All topics are complete</p><p className="text-sm text-muted-foreground">Your task list is clear.</p></div>}
+                {tasks.map((task, index) => <Button key={task.id} variant="ghost" onClick={() => navigate("/courses?tab=syllabus")} className="h-auto w-full justify-start gap-3 rounded-none px-2 py-3 text-left hover:bg-muted/50">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-semibold tabular-nums">{index + 1}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block break-words font-medium leading-snug">{task.content}</span>
+                    <span className="mt-1 block break-words text-xs font-normal text-muted-foreground">{task.courseName} · {task.subjectName}</span>
+                  </span>
+                  <Badge className="shrink-0" variant="outline">{Number(task.weightage) || 0}%</Badge>
+                </Button>)}
+              </div> : courses.length ? <div className="py-10 text-center">
+                <CheckCircle2 className="mx-auto mb-3 size-9 text-primary" />
+                <p className="font-medium">All topics are complete</p>
+                <p className="mt-1 text-sm text-muted-foreground">Your study list is clear for now.</p>
+              </div> : <div className="py-8 text-center">
+                <BookOpen className="mx-auto mb-3 size-9 text-muted-foreground" />
+                <p className="font-medium">No courses yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">Add a course to build your study list.</p>
+                <Button className="mt-4" size="sm" onClick={() => navigate("/courses?tab=courses")}>Create a course</Button>
+              </div>}
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 shadow-card">
-            <CardHeader><CardTitle>Subject completion</CardTitle><CardDescription>Select a course and subject to inspect its weighted progress.</CardDescription></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Select value={selectedCourse?.id ?? ""} onValueChange={setSelectedCourseId}><SelectTrigger><SelectValue placeholder="Course" /></SelectTrigger><SelectContent>{courses.map((course) => <SelectItem key={course.id} value={course.id}>{course.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={selectedSubject?.id ?? ""} onValueChange={setSelectedSubjectId}><SelectTrigger><SelectValue placeholder="Subject" /></SelectTrigger><SelectContent>{selectedCourse?.subjects.map((subject) => <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>)}</SelectContent></Select>
+          <Card className="progress-sheet__section-card border-border/70 shadow-card">
+            <CardHeader className="pb-3">
+              <CardTitle>Subject progress</CardTitle>
+              <CardDescription className="mt-1">Choose a subject to see its completion.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <Select value={selectedCourse?.id ?? ""} onValueChange={setSelectedCourseId} disabled={courses.length === 0}>
+                  <SelectTrigger aria-label="Choose course"><SelectValue placeholder="Choose course" /></SelectTrigger>
+                  <SelectContent>{courses.map((course) => <SelectItem key={course.id} value={course.id}>{course.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={selectedSubject?.id ?? ""} onValueChange={setSelectedSubjectId} disabled={!selectedCourse?.subjects.length}>
+                  <SelectTrigger aria-label="Choose subject"><SelectValue placeholder="Choose subject" /></SelectTrigger>
+                  <SelectContent>{selectedCourse?.subjects.map((subject) => <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>)}</SelectContent>
+                </Select>
               </div>
               {selectedSubject ? <>
-                <div className="relative mx-auto h-64 w-full max-w-sm">
-                  <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={chartData} dataKey="value" innerRadius={72} outerRadius={98} startAngle={90} endAngle={-270} strokeWidth={0}><Cell fill="hsl(var(--primary))" /><Cell fill="hsl(var(--muted))" /></Pie><Tooltip formatter={(value: number) => `${Math.round(value)}%`} /></PieChart></ResponsiveContainer>
-                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"><span className="text-4xl font-semibold">{Math.round(subjectProgress)}%</span><span className="text-xs text-muted-foreground">complete</span></div>
+                <div className="progress-sheet__chart relative mx-auto h-52 w-full max-w-[15rem]">
+                  <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={chartData} dataKey="value" innerRadius={62} outerRadius={84} startAngle={90} endAngle={-270} strokeWidth={0}><Cell fill="hsl(var(--primary))" /><Cell fill="hsl(var(--muted))" /></Pie><Tooltip formatter={(value: number) => `${Math.round(value)}%`} /></PieChart></ResponsiveContainer>
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"><span className="text-4xl font-semibold tabular-nums">{Math.round(subjectProgress)}%</span><span className="text-xs text-muted-foreground">complete</span></div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-center"><div className="rounded-md bg-muted/60 p-3"><p className="font-semibold">{subjectDoneWeight}/{subjectTotalWeight || subjectItems.length}%</p><p className="text-xs text-muted-foreground">Weightage done</p></div><div className="rounded-md bg-muted/60 p-3"><p className="font-semibold">{subjectItems.filter((item) => item.completed).length}/{subjectItems.length}</p><p className="text-xs text-muted-foreground">Topics done</p></div></div>
-              </> : <div className="py-16 text-center text-muted-foreground"><Target className="mx-auto mb-3 size-9 opacity-50" /><p>Add a subject to see its chart.</p></div>}
+                <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full bg-primary" />Completed</span>
+                  <span className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full bg-muted-foreground/30" />Remaining</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 border-t border-border pt-3 text-center">
+                  <div><p className="font-semibold tabular-nums">{formatWeight(subjectDoneWeight)} / {formatWeight(subjectTotalWeight || subjectItems.length)}{subjectTotalWeight ? "%" : ""}</p><p className="mt-1 text-xs text-muted-foreground">Weightage done</p></div>
+                  <div><p className="font-semibold tabular-nums">{subjectItems.filter((item) => item.completed).length} / {subjectItems.length}</p><p className="mt-1 text-xs text-muted-foreground">Topics done</p></div>
+                </div>
+              </> : <div className="py-10 text-center text-muted-foreground">
+                <Target className="mx-auto mb-3 size-8 opacity-60" />
+                <p className="font-medium text-foreground">No subject to show</p>
+                <p className="mt-1 text-sm">Add a subject to this course to see its chart.</p>
+              </div>}
             </CardContent>
           </Card>
         </section>
 
-        <section>
-          <div className="mb-4 flex items-center gap-2"><BookOpen className="size-5 text-primary" /><h2 className="text-2xl">All courses</h2></div>
-          {courses.length ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{courses.map((course) => {
-            const items = course.subjects.flatMap((subject) => subject.syllabus_items);
-            return <Card key={course.id} className="border-border/70 shadow-card"><CardHeader><div className="flex items-start justify-between gap-3"><CardTitle>{course.name}</CardTitle><Badge variant="outline">{Math.round(percent(items))}%</Badge></div><CardDescription>{course.subjects.length} subjects · {items.filter((item) => item.completed).length}/{items.length} topics</CardDescription></CardHeader></Card>;
-          })}</div> : <Card><CardContent className="py-12 text-center"><BookOpen className="mx-auto mb-3 size-10 text-muted-foreground" /><p className="mb-4 text-muted-foreground">Create your first course to begin tracking progress.</p><Button onClick={() => navigate("/courses?tab=courses")}>Create a course</Button></CardContent></Card>}
+        <section aria-label="Course summaries">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2"><BookOpen className="size-5 text-primary" /><h2 className="text-2xl">Courses</h2></div>
+            {courses.length > 0 && <Badge variant="outline">{courses.length}</Badge>}
+          </div>
+          {courses.length ? <div className="progress-sheet__course-list divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
+            {courses.map((course) => {
+              const items = course.subjects.flatMap((subject) => subject.syllabus_items);
+              const courseProgress = percent(items);
+              const done = items.filter((item) => item.completed).length;
+              return <div key={course.id} className="grid gap-2 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                <div className="min-w-0">
+                  <p className="break-words font-semibold">{course.name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{course.subjects.length} subjects · {done} of {items.length} topics complete</p>
+                  <Progress value={courseProgress} aria-label={`${course.name} completion`} className="mt-2 h-1.5 bg-muted" />
+                </div>
+                <Badge variant="secondary" className="w-fit tabular-nums sm:min-w-14 sm:justify-center">{Math.round(courseProgress)}%</Badge>
+              </div>;
+            })}
+          </div> : <Card className="border-border/70 shadow-card"><CardContent className="py-8 text-center">
+            <BookOpen className="mx-auto mb-3 size-9 text-muted-foreground" />
+            <p className="mb-4 text-sm text-muted-foreground">Create your first course to begin tracking progress.</p>
+            <Button onClick={() => navigate("/courses?tab=courses")}>Create a course</Button>
+          </CardContent></Card>}
         </section>
-
       </div>
     </main>
   );
