@@ -1,0 +1,2 @@
+- [ ] Track successful topic, subject, and course completions for analytics.
+- [ ] Improve Progress Sheet contrast, keyboard navigation, and screen-reader labels across themes.

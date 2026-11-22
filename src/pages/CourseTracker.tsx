@@ -343,13 +343,23 @@ const CourseTracker: React.FC = () => {
       await loadCourses();
       
       if (newCompleted) {
+        window.__lovableEvents?.track?.("project.topic_completed", {
+          topic_weightage: item.weightage,
+        });
         const remainingInSubject = subject.syllabusChecklist.filter(i => i.id !== itemId && !i.completed).length;
         if (remainingInSubject === 0) {
+          window.__lovableEvents?.track?.("project.subject_completed", {
+            topic_count: subject.syllabusChecklist.length,
+          });
           const remainingInCourse = course.subjects
             .filter(s => s.id !== subjectId)
             .flatMap(s => s.syllabusChecklist)
             .filter(i => !i.completed).length;
           if (remainingInCourse === 0) {
+            window.__lovableEvents?.track?.("project.course_completed", {
+              subject_count: course.subjects.length,
+              topic_count: course.subjects.reduce((count, currentSubject) => count + currentSubject.syllabusChecklist.length, 0),
+            });
             setCelebration({ level: 'course', name: course.name });
           } else {
             setCelebration({ level: 'subject', name: subject.name });
@@ -998,25 +1008,27 @@ const CourseTracker: React.FC = () => {
                   <CardContent>
                     <div className="space-y-2">
                       {subject.syllabusChecklist.map(item => (
-                        <div key={item.id} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-accent/5 transition-colors">
+                        <label key={item.id} htmlFor={`syllabus-topic-${item.id}`} className="flex min-h-11 cursor-pointer items-center space-x-3 rounded-lg border border-border p-3 transition-colors hover:bg-accent/5">
                           <input
+                            id={`syllabus-topic-${item.id}`}
                             type="checkbox"
                             checked={item.completed}
+                            aria-label={`Mark ${item.content} complete`}
                             onChange={() => toggleChecklistItem(selectedCourse, subject.id, item.id)}
-                            className="h-5 w-5 rounded border-border text-primary focus:ring-primary"
+                            className="h-5 w-5 shrink-0 rounded border-border text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                           />
-                          <span className={`flex-1 ${item.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                          <span className={`min-w-0 flex-1 break-words ${item.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                             {item.content}
                           </span>
-                          <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
+                          <span aria-label={`${item.weightage} percent exam weightage`} className="shrink-0 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
                             {item.weightage}%
                           </span>
                           {item.dateCompleted && (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="shrink-0 text-xs text-muted-foreground">
                               {new Date(item.dateCompleted).toLocaleDateString()}
                             </span>
                           )}
-                        </div>
+                        </label>
                       ))}
                     </div>
                   </CardContent>

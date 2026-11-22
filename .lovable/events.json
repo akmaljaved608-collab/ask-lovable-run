@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "events": {
+    "project.course_completed": {
+      "event_schema_version": 1,
+      "description": "A learner completes every syllabus topic in a course.",
+      "privacy": {
+        "contains_pii": false,
+        "purpose": "product_analytics"
+      },
+      "properties_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subject_count",
+          "topic_count"
+        ],
+        "properties": {
+          "subject_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "topic_count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "project.subject_completed": {
+      "event_schema_version": 1,
+      "description": "A learner completes every syllabus topic in a subject.",
+      "privacy": {
+        "contains_pii": false,
+        "purpose": "product_analytics"
+      },
+      "properties_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "topic_count"
+        ],
+        "properties": {
+          "topic_count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "project.topic_completed": {
+      "event_schema_version": 1,
+      "description": "A learner successfully marks a syllabus topic complete.",
+      "privacy": {
+        "contains_pii": false,
+        "purpose": "product_analytics"
+      },
+      "properties_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "topic_weightage"
+        ],
+        "properties": {
+          "topic_weightage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        }
+      }
+    }
+  }
+}
