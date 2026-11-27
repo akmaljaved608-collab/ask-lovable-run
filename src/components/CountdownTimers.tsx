@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 type Countdown = { id: string; title: string; target_date: string; note: string | null };
@@ -46,7 +46,7 @@ export default function CountdownTimers() {
     <Card role="region" aria-labelledby="countdowns-heading">
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
         <div>
-          <CardTitle id="countdowns-heading" className="flex items-center gap-2"><CalendarClock aria-hidden="true" className="h-5 w-5 text-primary" />Countdowns</CardTitle>
+          <h2 id="countdowns-heading" className="flex items-center gap-2 text-2xl font-semibold leading-none tracking-tight"><CalendarClock aria-hidden="true" className="h-5 w-5 text-primary" />Countdowns</h2>
           <CardDescription>Exams or any date that matters to you</CardDescription>
         </div>
         <Button type="button" size="sm" variant="outline" aria-expanded={open} aria-controls="countdown-form" onClick={() => setOpen((o) => !o)} className="min-h-11"><Plus aria-hidden="true" className="h-4 w-4" />Add</Button>
